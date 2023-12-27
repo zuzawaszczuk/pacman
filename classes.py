@@ -51,10 +51,8 @@ class Board():
         return
 
     def draw(self, screen):
-        c_y = (224 // 31)  # cell height
-        c_x = (248 // 28)  # cell width
-        print(c_y)
-        print(c_x)
+        c_x = 9  # cell width
+        c_y = 9  # cell height
         x = 0
         y = 0
         for row in self.cells:
@@ -68,67 +66,61 @@ class Board():
                                        (x + (0.5 * c_x), y + (0.5 * c_y)), 3)
                 if cell == 3:
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x + (0.5 * c_x) + 1, y - (0.5 * c_y) + 1,
-                                    c_x, c_y], pi, 1.45*pi, 1)
+                                    [x + (0.5 * c_x) + 2, y - (0.5 * c_y) - 2,
+                                    c_x, 1.2*c_y], pi, 1.45*pi, 1)
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x + 2, y - c_x, 2*c_x, 2*c_y],
-                                    pi, 1.45*pi, 1)
+                                    [x + 2, y - c_y - 2, 2*c_x, 2.1*c_y],
+                                    0.95*pi, 1.45*pi, 1)
                 if cell == 4:
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - (0.5 * c_x) + 1, y - (0.5 * c_y) + 1,
-                                    0.8*c_x, c_y], 1.55*pi, 0.05*pi, 1)
+                                    [x - (0.5 * c_x), y - (0.5 * c_y) - 1,
+                                    c_x, c_y], 1.5*pi, 1.95*pi, 1)
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - c_x - 2, y - c_y + 1, 2*c_x, 1.9*c_y],
+                                    [x - c_x - 2, y - c_y, 2*c_x, 1.9*c_y],
                                     1.55*pi, 1.95*pi, 1)
                 if cell == 5:
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - (0.5 * c_x) + 1, y + (0.5 * c_y) + 2,
-                                    0.9*c_x, c_y], 1.9*pi, 0.6*pi, 1)
+                                    [x - (0.5 * c_x), y + (0.5 * c_y) + 2,
+                                    c_x, c_y], 1.9*pi, 0.6*pi, 1)
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - c_x - 2, y + (0.4 * c_y),
-                                    2*c_x, 2.3*c_y], 0.05*pi, 0.5*pi, 1)
+                                    [x - c_x - 4, y + (0.4 * c_y) - 2,
+                                    2.3*c_x, 2.3*c_y], 0.05*pi, 0.35*pi, 1)
                 if cell == 6:
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x + (0.5 * c_x) + 1, y + (0.5 * c_y) + 2,
-                                    0.8*c_x, c_y], 0.4*pi, 1.05*pi, 1)
+                                    [x + (0.5 * c_x) + 2, y + (0.5 * c_y) + 2,
+                                    c_x, c_y], 0.5*pi, pi, 1)
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x + 2, y + (0.4 * c_y), 2*c_x, 2*c_y],
-                                    0.5*pi, pi, 1)
+                                    [x + 2, y + 2, 2*c_x, 2.2*c_y],
+                                    0.5*pi, 0.95*pi, 1)
                 if cell == 7:
-                    pygame.draw.rect(screen, colors['blue'],
-                                     (x + (0.5 * c_x) - 1, y - 1, 1, 1))
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x + (0.5 * c_x) - 1, y - (0.5 * c_y) + 1,
-                                    c_x, c_y], pi, 1.45*pi, 1)
+                                    [x + (0.5 * c_x) - 1, y - (0.5 * c_y) - 1,
+                                    c_x, 1.2*c_y], pi, 1.45*pi, 1)
                 if cell == 8:
                     pygame.draw.rect(screen, colors['blue'],
-                                     (x - 1, y + 2, 2, 1))
+                                     (x - 2, y + 3, 2, 1))
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - (0.5 * c_x) + 2, y - (0.5 * c_y) + 1,
-                                    0.8*c_x, c_y], 1.55*pi, 0.05*pi, 1)
+                                    [x - (0.5 * c_x) + 1, y - (0.5 * c_y),
+                                    c_x, c_y], 1.5*pi, 1.95*pi, 1)
                 if cell == 9:
                     pygame.draw.arc(screen, colors['blue'],
                                     [x + (0.5 * c_x) - 1, y + (0.5 * c_y) - 1,
-                                    0.8*c_x, c_y], 0.4*pi, 1.05*pi, 1)
+                                    c_x, c_y], 0.5*pi, pi, 1)
                 if cell == 10:
-                    pygame.draw.rect(screen, colors['blue'],
-                                     (x - 1, y + 2, 1, 1))
                     pygame.draw.arc(screen, colors['blue'],
-                                    [x - (0.5 * c_x) + 2, y + (0.5 * c_y) - 1,
-                                    0.9*c_x, c_y], 1.9*pi, 0.6*pi, 1)
+                                    [x - (0.5 * c_x) + 1, y + (0.5 * c_y) - 1,
+                                    c_x, c_y], 1.9*pi, 0.6*pi, 1)
                 if cell == 11:
                     pygame.draw.line(screen, colors['blue'],
                                      (x, y + (0.3 * c_y)),
                                      (x + c_x, y + (0.3 * c_y)), 1)
                     pygame.draw.line(screen, colors['blue'],
-                                     (x, y + (0.7 * c_y) + 1),
-                                     (x + c_x, y + (0.7 * c_y) + 1), 1)
+                                     (x, y + (0.7 * c_y)),
+                                     (x + c_x, y + (0.7 * c_y)), 1)
                 if cell == 12:
-                    pygame.draw.rect(screen, colors['blue'],
-                                     (x - 2, y + (0.3 * c_y), 3, 1))
                     pygame.draw.line(screen, colors['blue'],
-                                     (x + 1, y + (0.3 * c_y)),
-                                     (x + c_x + 2, y + (0.3 * c_y)), 1)
+                                     (x - 2, y + (0.4 * c_y)),
+                                     (x + c_x - 2, y + (0.4 * c_y)), 1)
                 if cell == 13:
                     pygame.draw.line(screen, colors['blue'],
                                      (x + (0.3 * c_x), y),
@@ -142,8 +134,8 @@ class Board():
                                      (x + (0.5 * c_x) - 1, y + c_y - 1), 1)
                 x += c_x
             y += c_y
-        pygame.draw.rect(screen, colors['blue'], (82, 86, 60, 32), width=1)
-        pygame.draw.rect(screen, colors['blue'], (85, 89, 54, 26), width=1)
+        pygame.draw.rect(screen, colors['blue'], (93, 110, 65, 40), width=1)
+        pygame.draw.rect(screen, colors['blue'], (97, 114, 57, 32), width=1)
 
 
 class Game():
@@ -205,20 +197,17 @@ class Game():
             pacman.y += pacman.speed
 
     def right_space(self, pacman, screen):
-        x = (pacman.x + 2 * pacman.radius)//16
-        y = pacman.y//16
+        x = (pacman.x + 2 * pacman.radius)//18
+        y = pacman.y//18
         id_x = x
         id_y = y
         pacman.x += pacman.speed
-        pygame.draw.circle(screen, colors['pink'], (pacman.x + pacman.radius, pacman.y), 2)
         border_line = pygame.Rect(pacman.x + pacman.radius - 4, pacman.y - 7, 3, 14)
         if self.board.is_wall(id_y, id_x):
-            wall = pygame.Rect(x*16, y*16, 16, 16)
-            print(wall)
-            print(border_line)
+            wall = pygame.Rect(x*18 + 5, y*18, 18, 18)
             print(f"{id_x} {id_y} {self.board.cells[id_y][id_x]}")
-            pygame.draw.rect(screen, colors['pink'], border_line)
-            pygame.draw.rect(screen, colors['pink'], wall)
+            #pygame.draw.rect(screen, colors['pink'], border_line)
+            #pygame.draw.rect(screen, colors['pink'], wall)
             pacman.x -= pacman.speed
             if wall.colliderect(border_line):
                 print(f"kolizja {x} {y} {self.board.cells[y][x]}")
