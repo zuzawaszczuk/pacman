@@ -1,37 +1,41 @@
 import pygame
 import sys
-from classes import Pacman
-from assets import draw_board
+from classes_menu import Button, Menu
 
 pygame.init()
 
-screen_width = 224
-screen_height = 248
-real_width = 448
-real_height = 496
-screen = pygame.Surface((screen_width, screen_height))
-real_screen = pygame.display.set_mode((real_width, real_height))
+# I use smaller parameters for board surface to get effect of
+# retro game.
+small_width = 224
+small_height = 248
+width = 448
+height = 496
+board_surface = pygame.Surface((small_width, small_height))
+pacman_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Pacman Game")
+clock = pygame.time.Clock()
 
-pacman = Pacman(screen, screen_width // 2, screen_height // 2, 1, 5)
+button1 = Button(" Start New Game", 20, 140, 400, 40, Menu.start_new_game,
+                 screen, pacman_surface, board_surface, width, height, clock)
+button2 = Button(" Resume", 20, 180, 200, 40, Menu.resume_game)
+button3 = Button(" Save Game", 20, 220, 270, 40, Menu.save_game)
+button4 = Button(" Load Game", 20, 260, 270, 40, Menu.load_game)
+button5 = Button(" Exit", 20, 300, 150, 40, Menu.exit_game)
+buttons = [button1, button2, button3, button4, button5]
+menu = Menu(buttons)
+
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                pacman.x -= pacman.speed
-            elif event.key == pygame.K_RIGHT:
-                pacman.x += pacman.speed
-            elif event.key == pygame.K_UP:
-                pacman.y -= pacman.speed
-            elif event.key == pygame.K_DOWN:
-                pacman.y += pacman.speed
+        else:
+            menu.run(event)
 
-    # screen.fill((0, 0, 0))
-    draw_board(screen)
-    pygame.transform.scale(screen, (real_width, real_height), real_screen)
-    pacman.draw()
+    menu.draw(screen)
+    menu.run(event)
+
     pygame.display.flip()
+    clock.tick(30)
