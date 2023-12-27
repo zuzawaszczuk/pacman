@@ -5,7 +5,7 @@ from math import pi
 
 
 class Pacman():
-    def __init__(self, screen, x, y, speed, radius, lives):
+    def __init__(self, screen, x, y, speed, radius, lives=3):
         self.screen = screen
         self.x = x
         self.y = y
@@ -142,7 +142,8 @@ class Board():
 
 class Game():
     def __init__(self, pacman, board, screen, board_surface, pacman_surface,
-                 clock, width, height, points=0, points_to_win=242, super_point_left=4):
+                 clock, width, height, points=0, points_to_win=242,
+                 super_point_left=4):
         self.pacman = pacman
         self.board = board
         self.screen = screen
@@ -204,7 +205,6 @@ class Game():
             self.clock.tick(30)
 
     def show_lives(self, screen, pacman):
-
         for i in range(pacman.lives):
             pygame.draw.arc(screen, colors['yellow'],
                             [400 + 20 * i, 560,
@@ -246,10 +246,13 @@ class Game():
         if x > 27 and y == 14:
             pacman.x = 0
             return True
-        if self.board.is_wall(y, x):
+        elif self.board.is_wall(y, x):
             wall = pygame.Rect(x*18 + 3, y*18, 18, 18)
             pacman.x -= pacman.speed
             return wall.colliderect(border_line) == 0
+        else:
+            pacman.x -= pacman.speed
+            return True
 
     def left_space(self, pacman):
         x, y = self.left_cell(pacman)
@@ -259,10 +262,13 @@ class Game():
         if x < 0 and y == 14:
             pacman.x = 27 * 18
             return True
-        if self.board.is_wall(y, x):
+        elif self.board.is_wall(y, x):
             wall = pygame.Rect(x*18 - 1, y*18, 18, 18)
             pacman.x += pacman.speed
             return wall.colliderect(border_line) == 0
+        else:
+            pacman.x += pacman.speed
+            return True
 
     def up_space(self, pacman):
         x, y = self.up_cell(pacman)
@@ -273,6 +279,9 @@ class Game():
             wall = pygame.Rect(x*18, y*18 - 5, 18, 18)
             pacman.y += pacman.speed
             return wall.colliderect(border_line) == 0
+        else:
+            pacman.y += pacman.speed
+            return True
 
     def down_space(self, pacman):
         x, y = self.down_cell(pacman)
@@ -283,6 +292,9 @@ class Game():
             wall = pygame.Rect(x*18, y*18 + 5, 18, 18)
             pacman.y -= pacman.speed
             return wall.colliderect(border_line) == 0
+        else:
+            pacman.y -= pacman.speed
+            return True
 
     def left_cell(self, player):
         x = (player.x - 2 * player.radius)//18
