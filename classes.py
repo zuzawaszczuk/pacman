@@ -47,8 +47,8 @@ class Board():
     def is_super_point(self, x, y):
         return self.cells[x][y] == 2
 
-    def from_id_to_cord(self, id_x, id_y):
-        return
+    def set_cell(self, x, y, value):
+        self.cells[x][y] = value
 
     def draw(self, screen):
         c_x = 9  # cell width
@@ -140,7 +140,7 @@ class Board():
 
 class Game():
     def __init__(self, pacman, board, screen, board_surface, pacman_surface,
-                 clock, width, height):
+                 clock, width, height, points=0, points_to_win=12):
         self.pacman = pacman
         self.board = board
         self.screen = screen
@@ -149,9 +149,12 @@ class Game():
         self.clock = clock
         self.width = width
         self.height = height
+        self.points = points
+        self.points_to_win = points_to_win
 
     def run(self):
-        while True:
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -176,6 +179,7 @@ class Game():
             self.pacman.draw(self.pacman_surface)
             self.board.draw(self.board_surface)
             self.moves(self.pacman)
+            self.eats(self.pacman, self.board)
             # Scales board surface to bigger one
             scaled_board_surface = pygame.transform.scale(
                 self.board_surface, (self.width, self.height))
@@ -183,8 +187,23 @@ class Game():
             self.screen.blit(scaled_board_surface, (0, 0))
             self.screen.blit(self.pacman_surface, (0, 0))
 
+            if self.points_to_win == 0:
+                running = False
+
             pygame.display.flip()
             self.clock.tick(30)
+
+    def eats(self, pacman, board):
+        x, y = self.my_cell(pacman)
+        if board.is_point(y, x):
+            board.set_cell(y, x, 0)
+            self.points += 10
+            self.points_to_win -= 1
+            print(self.points)
+        if board.is_super_point(y, x):
+            board.set_cell(y, x, 0)
+            self.points += 50
+            print(self.points)
 
     def moves(self, pacman):
         if pacman.angle == pi and self.left_space(pacman):
@@ -197,8 +216,7 @@ class Game():
             pacman.y += pacman.speed
 
     def right_space(self, pacman):
-        x = (pacman.x + 2 * pacman.radius)//18
-        y = pacman.y//18
+        x, y = self.right_cell(pacman)
         pacman.x += pacman.speed
         border_line = pygame.Rect(pacman.x + pacman.radius - 4,
                                   pacman.y - 7, 3, 14)
@@ -208,8 +226,7 @@ class Game():
             return wall.colliderect(border_line) == 0
 
     def left_space(self, pacman):
-        x = (pacman.x - 2 * pacman.radius)//18
-        y = pacman.y//18
+        x, y = self.left_cell(pacman)
         pacman.x -= pacman.speed
         border_line = pygame.Rect(pacman.x - pacman.radius + 4,
                                   pacman.y - 7, 3, 14)
@@ -219,8 +236,7 @@ class Game():
             return wall.colliderect(border_line) == 0
 
     def up_space(self, pacman):
-        x = pacman.x//18
-        y = (pacman.y - 2 * pacman.radius)//18
+        x, y = self.up_cell(pacman)
         pacman.y -= pacman.speed
         border_line = pygame.Rect(pacman.x - 7,
                                   pacman.y - pacman.radius, 14, 3)
@@ -230,8 +246,7 @@ class Game():
             return wall.colliderect(border_line) == 0
 
     def down_space(self, pacman):
-        x = pacman.x//18
-        y = (pacman.y + 2 * pacman.radius)//18
+        x, y = self.down_cell(pacman)
         pacman.y += pacman.speed
         border_line = pygame.Rect(pacman.x - 7,
                                   pacman.y + pacman.radius, 14, 3)
@@ -239,3 +254,28 @@ class Game():
             wall = pygame.Rect(x*18, y*18 + 5, 18, 18)
             pacman.y -= pacman.speed
             return wall.colliderect(border_line) == 0
+
+    def left_cell(self, player):
+        x = (player.x - 2 * player.radius)//18
+        y = player.y//18
+        return (x, y)
+
+    def right_cell(self, player):
+        x = (player.x + 2 * player.radius)//18
+        y = player.y//18
+        return (x, y)
+
+    def down_cell(self, player):
+        x = player.x//18
+        y = (player.y + 2 * player.radius)//18
+        return (x, y)
+
+    def up_cell(self, player):
+        x = player.x//18
+        y = (player.y - 2 * player.radius)//18
+        return (x, y)
+
+    def my_cell(self, player):
+        x = player.x//18
+        y = player.y//18
+        return (x, y)
