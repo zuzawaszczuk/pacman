@@ -140,7 +140,7 @@ class Board():
 
 class Game():
     def __init__(self, pacman, board, screen, board_surface, pacman_surface,
-                 clock, width, height, points=0, points_to_win=12):
+                 clock, width, height, points=0, points_to_win=242):
         self.pacman = pacman
         self.board = board
         self.screen = screen
@@ -220,6 +220,9 @@ class Game():
         pacman.x += pacman.speed
         border_line = pygame.Rect(pacman.x + pacman.radius - 4,
                                   pacman.y - 7, 3, 14)
+        if x > 27 and y == 14:
+            pacman.x = 0
+            return True
         if self.board.is_wall(y, x):
             wall = pygame.Rect(x*18 + 3, y*18, 18, 18)
             pacman.x -= pacman.speed
@@ -230,6 +233,9 @@ class Game():
         pacman.x -= pacman.speed
         border_line = pygame.Rect(pacman.x - pacman.radius + 4,
                                   pacman.y - 7, 3, 14)
+        if x < 0 and y == 14:
+            pacman.x = 27 * 18
+            return True
         if self.board.is_wall(y, x):
             wall = pygame.Rect(x*18 - 1, y*18, 18, 18)
             pacman.x += pacman.speed
