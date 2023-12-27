@@ -187,31 +187,55 @@ class Game():
             self.clock.tick(30)
 
     def moves(self, pacman):
-        if pacman.angle == pi:
+        if pacman.angle == pi and self.left_space(pacman):
             pacman.x -= pacman.speed
-        elif pacman.angle == 0 and self.right_space(pacman, self.pacman_surface):
+        elif pacman.angle == 0 and self.right_space(pacman):
             pacman.x += pacman.speed
-        elif pacman.angle == pi/2:
+        elif pacman.angle == pi/2 and self.up_space(pacman):
             pacman.y -= pacman.speed
-        elif pacman.angle == 1.5*pi:
+        elif pacman.angle == 1.5*pi and self.down_space(pacman):
             pacman.y += pacman.speed
 
-    def right_space(self, pacman, screen):
+    def right_space(self, pacman):
         x = (pacman.x + 2 * pacman.radius)//18
         y = pacman.y//18
-        id_x = x
-        id_y = y
         pacman.x += pacman.speed
-        border_line = pygame.Rect(pacman.x + pacman.radius - 4, pacman.y - 7, 3, 14)
-        if self.board.is_wall(id_y, id_x):
-            wall = pygame.Rect(x*18 + 5, y*18, 18, 18)
-            print(f"{id_x} {id_y} {self.board.cells[id_y][id_x]}")
-            #pygame.draw.rect(screen, colors['pink'], border_line)
-            #pygame.draw.rect(screen, colors['pink'], wall)
+        border_line = pygame.Rect(pacman.x + pacman.radius - 4,
+                                  pacman.y - 7, 3, 14)
+        if self.board.is_wall(y, x):
+            wall = pygame.Rect(x*18 + 3, y*18, 18, 18)
             pacman.x -= pacman.speed
-            if wall.colliderect(border_line):
-                print(f"kolizja {x} {y} {self.board.cells[y][x]}")
-                return 0
-            else:
-                print(f"brak{x} {y}")
-                return 1
+            return wall.colliderect(border_line) == 0
+
+    def left_space(self, pacman):
+        x = (pacman.x - 2 * pacman.radius)//18
+        y = pacman.y//18
+        pacman.x -= pacman.speed
+        border_line = pygame.Rect(pacman.x - pacman.radius + 4,
+                                  pacman.y - 7, 3, 14)
+        if self.board.is_wall(y, x):
+            wall = pygame.Rect(x*18 - 1, y*18, 18, 18)
+            pacman.x += pacman.speed
+            return wall.colliderect(border_line) == 0
+
+    def up_space(self, pacman):
+        x = pacman.x//18
+        y = (pacman.y - 2 * pacman.radius)//18
+        pacman.y -= pacman.speed
+        border_line = pygame.Rect(pacman.x - 7,
+                                  pacman.y - pacman.radius, 14, 3)
+        if self.board.is_wall(y, x):
+            wall = pygame.Rect(x*18, y*18 - 5, 18, 18)
+            pacman.y += pacman.speed
+            return wall.colliderect(border_line) == 0
+
+    def down_space(self, pacman):
+        x = pacman.x//18
+        y = (pacman.y + 2 * pacman.radius)//18
+        pacman.y += pacman.speed
+        border_line = pygame.Rect(pacman.x - 7,
+                                  pacman.y + pacman.radius, 14, 3)
+        if self.board.is_wall(y, x):
+            wall = pygame.Rect(x*18, y*18 + 5, 18, 18)
+            pacman.y -= pacman.speed
+            return wall.colliderect(border_line) == 0
