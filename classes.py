@@ -47,9 +47,14 @@ class Board():
     def is_super_point(self, x, y):
         return self.cells[x][y] == 2
 
+    def from_id_to_cord(self, id_x, id_y):
+        return
+
     def draw(self, screen):
         c_y = (224 // 31)  # cell height
         c_x = (248 // 28)  # cell width
+        print(c_y)
+        print(c_x)
         x = 0
         y = 0
         for row in self.cells:
@@ -173,13 +178,12 @@ class Game():
             self.board_surface.fill((0, 0, 0))
             self.pacman_surface.fill((0, 0, 0, 0))
 
-            self.moves(self.pacman)
             self.pacman.animate_mouth()
 
             # Draws on surfaces
             self.pacman.draw(self.pacman_surface)
             self.board.draw(self.board_surface)
-
+            self.moves(self.pacman)
             # Scales board surface to bigger one
             scaled_board_surface = pygame.transform.scale(
                 self.board_surface, (self.width, self.height))
@@ -193,9 +197,32 @@ class Game():
     def moves(self, pacman):
         if pacman.angle == pi:
             pacman.x -= pacman.speed
-        elif pacman.angle == 0:
+        elif pacman.angle == 0 and self.right_space(pacman, self.pacman_surface):
             pacman.x += pacman.speed
         elif pacman.angle == pi/2:
             pacman.y -= pacman.speed
         elif pacman.angle == 1.5*pi:
             pacman.y += pacman.speed
+
+    def right_space(self, pacman, screen):
+        x = (pacman.x + 2 * pacman.radius)//16
+        y = pacman.y//16
+        id_x = x
+        id_y = y
+        pacman.x += pacman.speed
+        pygame.draw.circle(screen, colors['pink'], (pacman.x + pacman.radius, pacman.y), 2)
+        border_line = pygame.Rect(pacman.x + pacman.radius - 4, pacman.y - 7, 3, 14)
+        if self.board.is_wall(id_y, id_x):
+            wall = pygame.Rect(x*16, y*16, 16, 16)
+            print(wall)
+            print(border_line)
+            print(f"{id_x} {id_y} {self.board.cells[id_y][id_x]}")
+            pygame.draw.rect(screen, colors['pink'], border_line)
+            pygame.draw.rect(screen, colors['pink'], wall)
+            pacman.x -= pacman.speed
+            if wall.colliderect(border_line):
+                print(f"kolizja {x} {y} {self.board.cells[y][x]}")
+                return 0
+            else:
+                print(f"brak{x} {y}")
+                return 1
