@@ -7,9 +7,9 @@ pygame.init()
 # I use smaller parameters for board surface to get effect of
 # retro game.
 small_width = 28 * 9
-small_height = 31 * 9
+small_height = 31 * 9 + 20
 width = 28 * 9 * 2
-height = 31 * 9 * 2
+height = 31 * 9 * 2 + 40
 board_surface = pygame.Surface((small_width, small_height))
 pacman_surface = pygame.Surface((width, height), pygame.SRCALPHA)
 screen = pygame.display.set_mode((width, height))

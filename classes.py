@@ -5,12 +5,14 @@ from math import pi
 
 
 class Pacman():
-    def __init__(self, screen, x, y, speed, radius):
+    def __init__(self, screen, x, y, speed, radius, lives):
         self.screen = screen
         self.x = x
         self.y = y
         self.speed = speed
         self.radius = radius
+        self.lives = lives
+
         self.angle = 0
         self.angle_added = 0
         self.mouth_direction = 1
@@ -140,7 +142,7 @@ class Board():
 
 class Game():
     def __init__(self, pacman, board, screen, board_surface, pacman_surface,
-                 clock, width, height, points=0, points_to_win=242):
+                 clock, width, height, points=0, points_to_win=242, super_point_left=4):
         self.pacman = pacman
         self.board = board
         self.screen = screen
@@ -151,9 +153,11 @@ class Game():
         self.height = height
         self.points = points
         self.points_to_win = points_to_win
+        self.super_point_left = super_point_left
 
     def run(self):
         running = True
+        undone = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -180,6 +184,8 @@ class Game():
             self.board.draw(self.board_surface)
             self.moves(self.pacman)
             self.eats(self.pacman, self.board)
+            self.show_points(self.pacman_surface)
+            self.show_lives(self.pacman_surface, self.pacman)
             # Scales board surface to bigger one
             scaled_board_surface = pygame.transform.scale(
                 self.board_surface, (self.width, self.height))
@@ -189,9 +195,27 @@ class Game():
 
             if self.points_to_win == 0:
                 running = False
+            # Collecting 4 super points gives additional life
+            if undone is True and self.super_point_left == 0:
+                self.pacman.lives += 1
+                undone = False
 
             pygame.display.flip()
             self.clock.tick(30)
+
+    def show_lives(self, screen, pacman):
+
+        for i in range(pacman.lives):
+            pygame.draw.arc(screen, colors['yellow'],
+                            [400 + 20 * i, 560,
+                            2 * pacman.radius, 2 * pacman.radius],
+                            pi/4, 1.75*pi, pacman.radius)
+
+    def show_points(self, screen):
+        pygame.font.init()
+        myfont = pygame.font.Font('arcade_font.ttf', 22)
+        label = myfont.render(f"SCORE:{self.points}", 1, colors['blue'])
+        screen.blit(label, (10, 560))
 
     def eats(self, pacman, board):
         x, y = self.my_cell(pacman)
@@ -199,11 +223,10 @@ class Game():
             board.set_cell(y, x, 0)
             self.points += 10
             self.points_to_win -= 1
-            print(self.points)
         if board.is_super_point(y, x):
             board.set_cell(y, x, 0)
             self.points += 50
-            print(self.points)
+            self.super_point_left -= 1
 
     def moves(self, pacman):
         if pacman.angle == pi and self.left_space(pacman):
@@ -228,7 +251,7 @@ class Game():
             pacman.x -= pacman.speed
             return wall.colliderect(border_line) == 0
 
-    def left_space(self, pacman): 
+    def left_space(self, pacman):
         x, y = self.left_cell(pacman)
         pacman.x -= pacman.speed
         border_line = pygame.Rect(pacman.x - pacman.radius + 4,
