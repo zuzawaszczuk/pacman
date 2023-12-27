@@ -26,7 +26,7 @@ class Menu():
 
     def start_new_game(screen, pacman_surface, board_surface, width,
                        height, clock):
-        pacman = Pacman(pacman_surface, width // 2, height // 2, 2, 10)
+        pacman = Pacman(pacman_surface, width // 2, 315, 3, 10)
         board = Board(cells)
         game = Game(pacman, board, screen, board_surface, pacman_surface,
                     clock, width, height)

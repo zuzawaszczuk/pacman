@@ -228,7 +228,7 @@ class Game():
             pacman.x -= pacman.speed
             return wall.colliderect(border_line) == 0
 
-    def left_space(self, pacman):
+    def left_space(self, pacman): 
         x, y = self.left_cell(pacman)
         pacman.x -= pacman.speed
         border_line = pygame.Rect(pacman.x - pacman.radius + 4,
