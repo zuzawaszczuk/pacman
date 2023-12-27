@@ -12,9 +12,9 @@ class Menu():
 
     def draw(self, screen):
         pygame.font.init()
-        myfont = pygame.font.Font('arcade_font.ttf', 26)
+        myfont = pygame.font.Font('arcade_font.ttf', 32)
         label = myfont.render("MENU", 1, colors['blue'])
-        screen.blit(label, (150, 50))
+        screen.blit(label, (180, 50))
         for button in self.buttons:
             label = myfont.render(button.text, 1, colors['blue'])
             screen.blit(label, (button.x, button.y))
