@@ -2,15 +2,29 @@ import pygame
 import sys
 from assets import colors
 from math import pi
+from classes_button import Button
 
 
-class Pacman():
-    def __init__(self, screen, x, y, speed, radius, lives=3):
+class Character():
+    def __init__(self, screen, x, y, speed, radius):
         self.screen = screen
-        self.x = x
+        self._x = x
         self.y = y
         self.speed = speed
         self.radius = radius
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x = value
+
+
+class Pacman(Character):
+    def __init__(self, screen, x, y, speed, radius, lives=3):
+        super().__init__(screen, x, y, speed, radius)
         self.lives = lives
 
         self.angle = 0
@@ -33,15 +47,23 @@ class Pacman():
         self.angle = new_angle
 
 
+class Ghost(Character):
+    def __init__(self, screen, x, y, speed, radius, is_dead, name):
+        super().__init__(screen, x, y, speed, radius)
+        self.is_dead = is_dead
+        self.name = name
+
+
 class Board():
     def __init__(self, cells):
-        self.cells = cells
+        self._cells = cells
+
+    @property
+    def cells(self):
+        return self._cells
 
     def is_wall(self, x, y):
-        if (self.cells[x][y] in [0, 1, 2]):
-            return False
-        else:
-            return True
+        return not (self.cells[x][y] in [0, 1, 2])
 
     def is_point(self, x, y):
         return self.cells[x][y] == 1
@@ -50,7 +72,7 @@ class Board():
         return self.cells[x][y] == 2
 
     def set_cell(self, x, y, value):
-        self.cells[x][y] = value
+        self._cells[x][y] = value
 
     def draw(self, screen):
         c_x = 9  # cell width
@@ -141,11 +163,12 @@ class Board():
 
 
 class Game():
-    def __init__(self, pacman, board, screen, board_surface, pacman_surface,
-                 clock, width, height, points=0, points_to_win=242,
-                 super_point_left=4):
+    def __init__(self, pacman, board, ghosts, screen, board_surface,
+                 pacman_surface, clock, width, height, points=0,
+                 points_to_win=242, super_point_left=4, high_score=0):
         self.pacman = pacman
         self.board = board
+        self.ghosts = ghosts
         self.screen = screen
         self.board_surface = board_surface
         self.pacman_surface = pacman_surface
@@ -155,47 +178,55 @@ class Game():
         self.points = points
         self.points_to_win = points_to_win
         self.super_point_left = super_point_left
+        self.high_score = high_score
+        self._running = True
 
     def run(self):
-        running = True
         undone = True
-        while running:
+        button = Button("MENU", 400, 5, 25, 100, 30, self.back_to_menu)
+        while self.running:
+
+            # Handles keyboard events to change directions of pacman
+            eventhandler = EventHandler(self.pacman)
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.pacman.change_direction(pi)
-                    elif event.key == pygame.K_RIGHT:
-                        self.pacman.change_direction(0)
-                    elif event.key == pygame.K_UP:
-                        self.pacman.change_direction(pi/2)
-                    elif event.key == pygame.K_DOWN:
-                        self.pacman.change_direction(1.5*pi)
+                eventhandler.handle_event(event)
+                # Handles mouse event - exit game to menu if button clicked
+                button.handle_event(event)
+
+            # Renders consequences of game logic on surfaces
+            renderer = Renderer(self.screen, self.board_surface,
+                                self.pacman_surface)
             # Cleans surfaces
-            self.screen.fill((0, 0, 0))
-            self.board_surface.fill((0, 0, 0))
-            self.pacman_surface.fill((0, 0, 0, 0))
+            renderer.cleans_surfaces()
+
+            # Draws on surfaces
+            renderer.render_board(self.board)
+            renderer.render_pacman(self.pacman)
+
+            # Scales board surface to bigger one
+            scaled_board_surface = pygame.transform.scale(
+                self.board_surface, (self.width, self.height))
+
+            # Puts surfaces on screen
+            self.screen.blit(scaled_board_surface, (0, 40))
+            self.screen.blit(self.pacman_surface, (0, 40))
+
+            # On top of surfaces last renders to draw on screen
+            renderer.render_score(self.points)
+            renderer.render_lives(self.pacman)
+            renderer.render_high_score(self.high_score)
+            button.draw(self.screen, colors)
 
             self.pacman.animate_mouth()
 
             # Draws on surfaces
-            self.pacman.draw(self.pacman_surface)
-            self.board.draw(self.board_surface)
             self.moves(self.pacman)
             self.eats(self.pacman, self.board)
-            self.show_points(self.pacman_surface)
-            self.show_lives(self.pacman_surface, self.pacman)
-            # Scales board surface to bigger one
-            scaled_board_surface = pygame.transform.scale(
-                self.board_surface, (self.width, self.height))
-            # Puts surfaces on screen
-            self.screen.blit(scaled_board_surface, (0, 0))
-            self.screen.blit(self.pacman_surface, (0, 0))
 
-            if self.points_to_win == 0:
-                running = False
+            # Checks if player won
+            if self.won():
+                self.not_running()
+
             # Collecting 4 super points gives additional life
             if undone is True and self.super_point_left == 0:
                 self.pacman.lives += 1
@@ -204,18 +235,15 @@ class Game():
             pygame.display.flip()
             self.clock.tick(30)
 
-    def show_lives(self, screen, pacman):
-        for i in range(pacman.lives):
-            pygame.draw.arc(screen, colors['yellow'],
-                            [400 + 20 * i, 560,
-                            2 * pacman.radius, 2 * pacman.radius],
-                            pi/4, 1.75*pi, pacman.radius)
+    @property
+    def running(self):
+        return self._running
 
-    def show_points(self, screen):
-        pygame.font.init()
-        myfont = pygame.font.Font('arcade_font.ttf', 22)
-        label = myfont.render(f"SCORE:{self.points}", 1, colors['blue'])
-        screen.blit(label, (10, 560))
+    def not_running(self):
+        self._running = False
+
+    def running_again(self):
+        self._running = True
 
     def eats(self, pacman, board):
         x, y = self.my_cell(pacman)
@@ -320,3 +348,66 @@ class Game():
         x = player.x//18
         y = player.y//18
         return (x, y)
+
+    def won(self):
+        return self.points_to_win == 0
+
+    def back_to_menu(self):
+        print('back to men')
+        self.not_running()
+
+
+class EventHandler:
+    def __init__(self, pacman):
+        self.pacman = pacman
+
+    def handle_event(self, event):
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                self.pacman.change_direction(pi)
+            elif event.key == pygame.K_RIGHT:
+                self.pacman.change_direction(0)
+            elif event.key == pygame.K_UP:
+                self.pacman.change_direction(pi/2)
+            elif event.key == pygame.K_DOWN:
+                self.pacman.change_direction(1.5*pi)
+
+
+class Renderer:
+    def __init__(self, screen, board_surface, pacman_surface):
+        self.screen = screen
+        self.board_surface = board_surface
+        self.pacman_surface = pacman_surface
+
+    def cleans_surfaces(self):
+        self.screen.fill((0, 0, 0))
+        self.board_surface.fill((0, 0, 0))
+        self.pacman_surface.fill((0, 0, 0, 0))
+
+    def render_board(self, board):
+        board.draw(self.board_surface)
+
+    def render_pacman(self, pacman):
+        pacman.draw(self.pacman_surface)
+
+    def render_score(self, score):
+        pygame.font.init()
+        myfont = pygame.font.Font('arcade_font.ttf', 22)
+        label = myfont.render(f"SCORE:{score}", 1, colors['blue'])
+        self.screen.blit(label, (10, 600))
+
+    def render_lives(self, pacman):
+        for i in range(pacman.lives):
+            pygame.draw.arc(self.screen, colors['yellow'],
+                            [400 + 20 * i, 600,
+                            2 * pacman.radius, 2 * pacman.radius],
+                            pi/4, 1.75*pi, pacman.radius)
+
+    def render_high_score(self, high_score):
+        pygame.font.init()
+        myfont = pygame.font.Font('arcade_font.ttf', 22)
+        label = myfont.render(f"HIGH SCORE:{high_score}", 1, colors['blue'])
+        self.screen.blit(label, (10, 10))

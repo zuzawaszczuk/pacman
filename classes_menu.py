@@ -1,39 +1,65 @@
 import pygame
 import sys
-from assets import colors
-from classes import Board, Pacman, Game
+from classes import Board, Pacman, Game, Ghost
 from assets import cells
-from functools import partial
+import copy
 
 
 class Menu():
-    def __init__(self, buttons):
-        self.buttons = buttons
+    def __init__(self, colors, buttons=[]):
+        self.colors = colors
+        self._buttons = buttons
+        self._current_game = None
 
-    def draw(self, screen):
-        pygame.font.init()
-        myfont = pygame.font.Font('arcade_font.ttf', 32)
-        label = myfont.render("MENU", 1, colors['blue'])
-        screen.blit(label, (180, 50))
-        for button in self.buttons:
-            label = myfont.render(button.text, 1, colors['blue'])
-            screen.blit(label, (button.x, button.y))
-            button.draw(screen)
+    def run(self, screen, clock):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                else:
+                    for button in self.buttons:
+                        button.handle_event(event)
 
-    def run(self, event):
-        for button in self.buttons:
-            button.handle_event(event)
+            screen.fill((0, 0, 0))
+            self.draw(screen, self.colors)
 
-    def start_new_game(screen, pacman_surface, board_surface, width,
+            pygame.display.flip()
+            clock.tick(30)
+
+    def set_buttons(self, buttons):
+        self._buttons = buttons
+
+    @property
+    def buttons(self):
+        return self._buttons
+
+    @property
+    def current_game(self):
+        return self._current_game
+
+    def set_game(self, game):
+        self._current_game = game
+
+    def run_current_game(self):
+        self.current_game.running_again()
+        self.current_game.run()
+
+    def start_new_game(self, screen, pacman_surface, board_surface, width,
                        height, clock):
+        copy_cells = copy.deepcopy(cells)
+        blinky = Ghost(pacman_surface, width // 2, 250, 3, 10, 0, "blinky")
+        ghosts = [blinky]
         pacman = Pacman(pacman_surface, width // 2, 315, 3, 10)
-        board = Board(cells)
-        game = Game(pacman, board, screen, board_surface, pacman_surface,
-                    clock, width, height)
+        board = Board(copy_cells)
+        game = Game(pacman, board, ghosts, screen, board_surface,
+                    pacman_surface, clock, width, height)
         game.run()
+        self.set_game(game)
+        self.run(screen, clock)
 
-    def resume_game():
-        pass
+    def resume_game(self):
+        self.run_current_game()
 
     def save_game():
         pass
@@ -45,25 +71,10 @@ class Menu():
         pygame.quit()
         sys.exit()
 
-
-class Button():
-
-    def __init__(self, text, x, y, width, height, command, *args):
-        self.text = text
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.command = partial(command, *args)
-        self.rect = pygame.Rect(x, y, width, height)
-
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            if self.rect.collidepoint(mouse_x, mouse_y):
-                print("Przycisk został kliknięty!")
-                self.command()
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, colors['blue'],
-                         (self.x, self.y, self.width, self.height), 1)
+    def draw(self, screen, colors):
+        pygame.font.init()
+        myfont = pygame.font.Font('arcade_font.ttf', 32)
+        label = myfont.render("MENU", 1, colors['blue'])
+        screen.blit(label, (180, 50))
+        for button in self.buttons:
+            button.draw(screen, colors)

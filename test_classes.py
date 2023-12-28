@@ -1,4 +1,4 @@
-from classes import Pacman, Board, Game
+from classes import Pacman, Board, Game, Ghost
 from assets import cells
 import pygame
 from math import pi
@@ -52,7 +52,8 @@ def test_game_init():
     pacman = Pacman(5, 50, 50, 4, 5)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.pacman == pacman
     assert game.board == board
     assert game.screen == 10
@@ -70,7 +71,8 @@ def test_eats():
     pacman = Pacman(5, 20, 20, 4, 5)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     x, y = game.my_cell(pacman)
     assert board.is_point(y, x) == 1
     assert game.points == 0
@@ -85,7 +87,8 @@ def test_rigth_space_true():
     pacman = Pacman(5, 100, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 1
 
 
@@ -93,7 +96,8 @@ def test_rigth_space_false():
     pacman = Pacman(5, 100, 10, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 0
 
 
@@ -101,7 +105,8 @@ def test_rigth_space_tunnel():
     pacman = Pacman(5, 14*9, 28*9, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 1
 
 
@@ -109,7 +114,8 @@ def test_left_space_true():
     pacman = Pacman(5, 100, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.left_space(pacman) == 1
 
 
@@ -117,7 +123,8 @@ def test_left_space_false():
     pacman = Pacman(5, 20, 70, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.left_space(pacman) == 0
 
 
@@ -125,7 +132,8 @@ def test_left_space_tunnel():
     pacman = Pacman(5, 0, 28*9, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 1
 
 
@@ -133,7 +141,8 @@ def test_down_space_true():
     pacman = Pacman(5, 20, 20, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.down_space(pacman) == 1
 
 
@@ -141,7 +150,8 @@ def test_down_space_false():
     pacman = Pacman(5, 60, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.down_space(pacman) == 0
 
 
@@ -149,7 +159,8 @@ def test_up_space_true():
     pacman = Pacman(5, 20, 70, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.up_space(pacman) == 1
 
 
@@ -157,7 +168,8 @@ def test_up_space_false():
     pacman = Pacman(5, 30, 20, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.up_space(pacman) == 0
 
 
@@ -165,7 +177,8 @@ def test_moves_right_typical():
     pacman = Pacman(5, 100, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 1
     assert pacman.x == 100
     game.moves(pacman)
@@ -176,7 +189,8 @@ def test_moves_right_collison():
     pacman = Pacman(5, 100, 10, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     assert game.right_space(pacman) == 0
     assert pacman.x == 100
     game.moves(pacman)
@@ -187,7 +201,8 @@ def test_moves_left_typical():
     pacman = Pacman(5, 100, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = pi
     assert game.left_space(pacman) == 1
     assert pacman.x == 100
@@ -199,7 +214,8 @@ def test_moves_left_collison():
     pacman = Pacman(5, 20, 10, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = pi
     assert game.left_space(pacman) == 0
     assert pacman.x == 20
@@ -211,7 +227,8 @@ def test_moves_up_typical():
     pacman = Pacman(5, 100, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = pi/2
     assert game.up_space(pacman) == 1
     assert pacman.y == 30
@@ -223,7 +240,8 @@ def test_moves_up_collison():
     pacman = Pacman(5, 20, 20, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = pi/2
     assert game.up_space(pacman) == 0
     assert pacman.y == 20
@@ -235,7 +253,8 @@ def test_moves_down_typical():
     pacman = Pacman(5, 30, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = 1.5*pi
     assert game.down_space(pacman) == 1
     assert pacman.y == 30
@@ -247,9 +266,21 @@ def test_moves_down_collison():
     pacman = Pacman(5, 60, 30, 3, 10)
     clock = pygame.time.Clock()
     board = Board(cells)
-    game = Game(pacman, board, 10, 10, 10, clock, 50, 50)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    game = Game(pacman, board, ghost, 10, 10, 10, clock, 50, 50)
     pacman.angle = 1.5*pi
     assert game.down_space(pacman) == 0
     assert pacman.y == 30
     game.moves(pacman)
     assert pacman.y == 30
+
+
+def test_ghost_init():
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    assert ghost.screen == 5
+    assert ghost.x == 100
+    assert ghost.y == 150
+    assert ghost.speed == 4
+    assert ghost.radius == 9
+    assert ghost.is_dead is False
+    assert ghost.name == "blinky"
