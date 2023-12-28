@@ -43,18 +43,21 @@ class Menu():
 
     def run_current_game(self):
         self.current_game.running_again()
-        self.current_game.run()
+        self.current_game.run(self.colors)
 
     def start_new_game(self, screen, pacman_surface, board_surface, width,
                        height, clock):
         copy_cells = copy.deepcopy(cells)
-        blinky = Ghost(pacman_surface, width // 2, 250, 3, 10, 0, "blinky")
-        ghosts = [blinky]
-        pacman = Pacman(pacman_surface, width // 2, 315, 3, 10)
+        blinky = Ghost(width // 2 - 12, 193, 3, 12, "blinky")
+        inky = Ghost(width // 2 - 46, 245, 3, 12, "inky")
+        pinky = Ghost(width // 2 - 12, 245, 3, 12, "pinky")
+        clyde = Ghost(width // 2 + 22, 245, 3, 12, "clyde")
+        ghosts = [blinky, inky, pinky, clyde]
+        pacman = Pacman(width // 2, 315, 3, 10)
         board = Board(copy_cells)
         game = Game(pacman, board, ghosts, screen, board_surface,
                     pacman_surface, clock, width, height)
-        game.run()
+        game.run(self.colors)
         self.set_game(game)
         self.run(screen, clock)
 

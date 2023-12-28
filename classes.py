@@ -1,17 +1,16 @@
 import pygame
 import sys
-from assets import colors
 from math import pi
 from classes_button import Button
 
 
 class Character():
-    def __init__(self, screen, x, y, speed, radius):
-        self.screen = screen
+    def __init__(self, x, y, speed, radius):
         self._x = x
         self.y = y
         self.speed = speed
         self.radius = radius
+        self._angle = 0
 
     @property
     def x(self):
@@ -21,17 +20,23 @@ class Character():
     def x(self, value):
         self._x = value
 
+    def change_direction(self, new_angle):
+        self._angle = new_angle
+
+    @property
+    def angle(self):
+        return self._angle
+
 
 class Pacman(Character):
-    def __init__(self, screen, x, y, speed, radius, lives=3):
-        super().__init__(screen, x, y, speed, radius)
+    def __init__(self, x, y, speed, radius, lives=3):
+        super().__init__(x, y, speed, radius)
         self.lives = lives
 
-        self.angle = 0
         self.angle_added = 0
         self.mouth_direction = 1
 
-    def draw(self, screen):
+    def draw(self, screen, colors):
         pygame.draw.arc(screen, colors['yellow'], [self.x - self.radius,
                         self.y - self.radius,
                         2 * self.radius, 2 * self.radius],
@@ -43,15 +48,19 @@ class Pacman(Character):
         if self.angle_added <= 0 or self.angle_added >= pi*0.3:
             self.mouth_direction *= -1
 
-    def change_direction(self, new_angle):
-        self.angle = new_angle
-
 
 class Ghost(Character):
-    def __init__(self, screen, x, y, speed, radius, is_dead, name):
-        super().__init__(screen, x, y, speed, radius)
+    def __init__(self, x, y, speed, radius, name, is_dead=False):
+        super().__init__(x, y, speed, radius)
         self.is_dead = is_dead
         self.name = name
+
+    def draw(self, screen):
+        width = 2*self.radius
+        image = pygame.image.load(f"ghosts/{self.name}.png")
+        scaled_image = pygame.transform.scale(image, (width, width))
+        rect = [self.x, self.y, width, width]
+        screen.blit(scaled_image, rect)
 
 
 class Board():
@@ -74,7 +83,7 @@ class Board():
     def set_cell(self, x, y, value):
         self._cells[x][y] = value
 
-    def draw(self, screen):
+    def draw(self, screen, colors):
         c_x = 9  # cell width
         c_y = 9  # cell height
         x = 0
@@ -181,7 +190,7 @@ class Game():
         self.high_score = high_score
         self._running = True
 
-    def run(self):
+    def run(self, colors):
         undone = True
         button = Button("MENU", 400, 5, 25, 100, 30, self.back_to_menu)
         while self.running:
@@ -195,13 +204,14 @@ class Game():
 
             # Renders consequences of game logic on surfaces
             renderer = Renderer(self.screen, self.board_surface,
-                                self.pacman_surface)
+                                self.pacman_surface, colors)
             # Cleans surfaces
             renderer.cleans_surfaces()
 
             # Draws on surfaces
             renderer.render_board(self.board)
             renderer.render_pacman(self.pacman)
+            renderer.render_ghosts(self.ghosts)
 
             # Scales board surface to bigger one
             scaled_board_surface = pygame.transform.scale(
@@ -377,10 +387,11 @@ class EventHandler:
 
 
 class Renderer:
-    def __init__(self, screen, board_surface, pacman_surface):
+    def __init__(self, screen, board_surface, pacman_surface, colors):
         self.screen = screen
         self.board_surface = board_surface
         self.pacman_surface = pacman_surface
+        self.colors = colors
 
     def cleans_surfaces(self):
         self.screen.fill((0, 0, 0))
@@ -388,20 +399,24 @@ class Renderer:
         self.pacman_surface.fill((0, 0, 0, 0))
 
     def render_board(self, board):
-        board.draw(self.board_surface)
+        board.draw(self.board_surface, self.colors)
 
     def render_pacman(self, pacman):
-        pacman.draw(self.pacman_surface)
+        pacman.draw(self.pacman_surface, self.colors)
+
+    def render_ghosts(self, ghosts):
+        for ghost in ghosts:
+            ghost.draw(self.pacman_surface)
 
     def render_score(self, score):
         pygame.font.init()
         myfont = pygame.font.Font('arcade_font.ttf', 22)
-        label = myfont.render(f"SCORE:{score}", 1, colors['blue'])
+        label = myfont.render(f"SCORE:{score}", 1, self.colors['blue'])
         self.screen.blit(label, (10, 600))
 
     def render_lives(self, pacman):
         for i in range(pacman.lives):
-            pygame.draw.arc(self.screen, colors['yellow'],
+            pygame.draw.arc(self.screen, self.colors['yellow'],
                             [400 + 20 * i, 600,
                             2 * pacman.radius, 2 * pacman.radius],
                             pi/4, 1.75*pi, pacman.radius)
@@ -409,5 +424,6 @@ class Renderer:
     def render_high_score(self, high_score):
         pygame.font.init()
         myfont = pygame.font.Font('arcade_font.ttf', 22)
-        label = myfont.render(f"HIGH SCORE:{high_score}", 1, colors['blue'])
+        label = myfont.render(f"HIGH SCORE:{high_score}", 1,
+                              self.colors['blue'])
         self.screen.blit(label, (10, 10))

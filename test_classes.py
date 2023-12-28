@@ -276,7 +276,7 @@ def test_moves_down_collison():
 
 
 def test_ghost_init():
-    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    ghost = Ghost(5, 100, 150, 4, 9, "blinky", False)
     assert ghost.screen == 5
     assert ghost.x == 100
     assert ghost.y == 150
