@@ -46,8 +46,9 @@ class Game():
 
             # Action in game connected with pacman eating super point
             if pacmanlogic.eats_super_points(self.pacman, self.points):
-                allghosts.frightened()
+                pass
 
+            door = False
             # Checks collison beetween pacman and ghots
             for ghost in self.ghosts:
                 if (not ghost.at_home and not ghost.going_out) or \
@@ -55,6 +56,8 @@ class Game():
                     # Ghost is moving, when he is out of home and already go
                     # through door or is inside home and goes out move to door
                     elementmover.moves(ghost)
+                if ghost.going_out:
+                    door = True
 
                 if pacmanlogic.collision(ghost, self.pacman):
                     self.pacman.lives -= 1
@@ -84,7 +87,7 @@ class Game():
             renderer.cleans_surfaces()
 
             # Draws on surfaces
-            renderer.render_board(self.board)
+            renderer.render_board(self.board, door)
             renderer.render_pacman(self.pacman)
             renderer.render_ghosts(self.ghosts)
 
@@ -164,8 +167,8 @@ class Renderer():
         self.board_surface.fill((0, 0, 0))
         self.pacman_surface.fill((0, 0, 0, 0))
 
-    def render_board(self, board: Board) -> None:
-        board.draw(self.board_surface, self.colors)
+    def render_board(self, board: Board, door: bool) -> None:
+        board.draw(self.board_surface, self.colors, door)
 
     def render_pacman(self, pacman: Pacman) -> None:
         pacman.animate_mouth()

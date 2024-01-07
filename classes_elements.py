@@ -114,6 +114,9 @@ class Ghost(Character):
     def next_tile(self) -> Tuple[int, int]:
         return self._next_tile
 
+    def reset_next_tile(self) -> None:
+        self._next_tile = (int(self.x // 18), int(self.y // 18))
+
     def set_next_tile(self, x: int, y: int) -> None:
         self._next_tile = (x, y)
 
@@ -161,7 +164,8 @@ class Board():
     def set_cell(self, x: int, y: int, value: int) -> None:
         self._cells[x][y] = value
 
-    def draw(self, screen: Surface, colors: dict[str, TColor]) -> None:
+    def draw(self, screen: Surface, colors: dict[str, TColor],
+             door: bool) -> None:
         c_x = 9  # cell width
         c_y = 9  # cell height
         x = 0
@@ -243,7 +247,7 @@ class Board():
                     pygame.draw.line(screen, colors['blue'],
                                      (x + (0.5 * c_x) - 1, y - 1),
                                      (x + (0.5 * c_x) - 1, y + c_y - 1), 1)
-                if cell == 16:
+                if cell == 16 and not door:
                     pygame.draw.line(screen, colors['pink'],
                                      (x, y + 3),
                                      (x + c_x, y + 3), 4)
@@ -251,6 +255,13 @@ class Board():
             y += c_y
         pygame.draw.rect(screen, colors['blue'], (93, 110, 65, 40), width=1)
         pygame.draw.rect(screen, colors['blue'], (97, 114, 57, 32), width=1)
+        if door:
+            pygame.draw.line(screen, colors['black'], (120, 111),
+                             (140, 111), width=6)
+            pygame.draw.line(screen, colors['pink'], (120, 115),
+                             (120, 97), width=3)
+            pygame.draw.line(screen, colors['blue'], (140, 114),
+                             (140, 110), width=1)
 
 
 class Points():

@@ -187,43 +187,37 @@ class AllGhostAction():
         self.frightened_timer = 0.0
 
     def run(self) -> None:
-        # if self.is_frightened is True:
-        #     if self.frightened_timer < 5:
-        #         return 0
-        #     self.is_frightened = False
-
         timer = time.time() - self.start_time
         print(timer)
         self.activate_ghost_to_go_out()
-        self.scatter()
-        # if timer < 7:
-        #     self.scatter()
-        # elif int(timer) == 7 and self.one is True:
-        #     for ghost in self.ghosts:
-        #         self.reverse_direction(ghost)
-        #     self.one = False
-        # elif timer < 27:
-        #     self.chase()
-        # elif timer < 34:
-        #     self.scatter()
-        # elif int(timer) == 34 and self.two:
-        #     for ghost in self.ghosts:
-        #         self.reverse_direction(ghost)
-        #     self.two = False
-        # elif timer < 54:
-        #     self.chase()
-        # elif timer < 59:
-        #     self.scatter()
-        # elif int(timer) == 59 and self.three:
-        #     for ghost in self.ghosts:
-        #         self.reverse_direction(ghost)
-        #     self.three = False
-        # elif timer < 79:
-        #     self.chase()
-        # elif timer < 85:
-        #     self.scatter()
-        # else:
-        #     self.chase()
+        if timer < 7:
+            self.scatter()
+        elif int(timer) == 7 and self.one is True:
+            for ghost in self.ghosts:
+                self.reverse_direction(ghost)
+            self.one = False
+        elif timer < 27:
+            self.chase()
+        elif timer < 34:
+            self.scatter()
+        elif int(timer) == 34 and self.two:
+            for ghost in self.ghosts:
+                self.reverse_direction(ghost)
+            self.two = False
+        elif timer < 54:
+            self.chase()
+        elif timer < 59:
+            self.scatter()
+        elif int(timer) == 59 and self.three:
+            for ghost in self.ghosts:
+                self.reverse_direction(ghost)
+            self.three = False
+        elif timer < 79:
+            self.chase()
+        elif timer < 85:
+            self.scatter()
+        else:
+            self.chase()
 
     def activate_ghost_to_go_out(self):
         if self.blinky.at_home:
@@ -249,17 +243,19 @@ class AllGhostAction():
         self.clyde.set_cord(28*9 + 30, 260)
         for ghost in self.ghosts:
             ghost.back_at_home()
+            ghost.reset_next_tile()
 
     def go_out(self, ghost: Ghost) -> None:
         x, y = self.ghostlogic.compute_current_tile(ghost)
-        print(f'go up {(x, y)}')
         if x != 14 and ghost.at_home:
             if ghost.going_out is False:
                 ghost.set_next_tile(x, y)
             ghost.start_going_out()
             self.go_to_tile(ghost, 14, 14, self.ghostlogic)
-            print(f'actual {ghost.x} {ghost.y} {ghost.angle}')
         elif y > 11:
+            if ghost.going_out is False:
+                ghost.set_next_tile(x, y)
+            ghost.start_going_out()
             if ghost.at_home:
                 ghost.up()
                 ghost.out_of_home()
@@ -271,12 +267,14 @@ class AllGhostAction():
 
     def reverse_direction(self, ghost: Ghost) -> None:
         change = {
-            0: ghost.left,
-            pi/2: ghost.up,
-            pi: ghost.right,
-            1.5*pi: ghost.down
+            0: pi,
+            pi/2: 1.5*pi,
+            pi: 0,
+            1.5*pi: pi/2
         }
-        change[ghost.angle]()
+        x, y = self.ghostlogic.compute_current_tile(ghost)
+        ghost.set_next_tile(x, y)
+        ghost.change_direction(change[ghost.angle])
 
     def go_to_tile(self, ghost: Ghost, tile_x: int, tile_y: int,
                    ghostlogic: GhostDetectingWalls):
@@ -310,44 +308,60 @@ class AllGhostAction():
             self.go_to_tile(self.clyde, 2, 31, self.ghostlogic)
 
     def chase(self) -> None:
+        if (self.blinky.at_home or self.blinky.going_out) is False:
+            self.chase_blinky()
+        if (self.pinky.at_home or self.pinky.going_out) is False:
+            self.chase_pinky()
+        if (self.inky.at_home or self.inky.going_out) is False:
+            self.chase_inky()
+        if (self.clyde.at_home or self.clyde.going_out) is False:
+            self.chase_clyde()
+
+    def chase_blinky(self) -> None:
         x, y = self.ghostlogic.my_cell(self.pacman)
         # Blinky targets pacman positions
         self.go_to_tile(self.blinky, x, y, self.ghostlogic)
-        print("chase")
+
+    def chase_pinky(self) -> None:
+        x, y = self.ghostlogic.my_cell(self.pacman)
         # Pinky targets a tile 4 cells before pacman actual direction
+        if self.pacman.angle == pi:
+            self.go_to_tile(self.pinky, x - 4, y, self.ghostlogic)
+        elif self.pacman.angle == 0:
+            self.go_to_tile(self.pinky, x + 4, y, self.ghostlogic)
+        elif self.pacman.angle == pi/2:
+            self.go_to_tile(self.pinky, x, y - 4, self.ghostlogic)
+        elif self.pacman.angle == 1.5*pi:
+            self.go_to_tile(self.pinky, x, y + 4, self.ghostlogic)
+
+    def chase_inky(self) -> None:
+        x, y = self.ghostlogic.my_cell(self.pacman)
         # Inky is more complicated, their goal is to be two times futher
         # than distance from blinky to tile 2 cells before pacman
         blinky_x, blinky_y = self.ghostlogic.my_cell(self.blinky)
         if self.pacman.angle == pi:
-            self.go_to_tile(self.pinky, x - 4, y, self.ghostlogic)
-            # self.go_to_tile(self.inky, 2*(x-2) - blinky_x, 2*y - blinky_y,
-            #                self.ghostlogic)
+            self.go_to_tile(self.inky, 2*(x-2) - blinky_x, 2*y - blinky_y,
+                            self.ghostlogic)
         elif self.pacman.angle == 0:
-            self.go_to_tile(self.pinky, x + 4, y, self.ghostlogic)
-            # self.go_to_tile(self.inky, 2*(x+2) - blinky_x, 2*y - blinky_y,
-            #                self.ghostlogic)
+            self.go_to_tile(self.inky, 2*(x+2) - blinky_x, 2*y - blinky_y,
+                            self.ghostlogic)
         elif self.pacman.angle == pi/2:
-            self.go_to_tile(self.pinky, x, y - 4, self.ghostlogic)
-            # self.go_to_tile(self.inky, 2*x - blinky_x, 2*(y-2) - blinky_y,
-            #                self.ghostlogic)
+            self.go_to_tile(self.inky, 2*x - blinky_x, 2*(y-2) - blinky_y,
+                            self.ghostlogic)
         elif self.pacman.angle == 1.5*pi:
-            self.go_to_tile(self.pinky, x, y + 4, self.ghostlogic)
-            # self.go_to_tile(self.inky, 2*x - blinky_x, 2*(y+2) - blinky_y,
-            #                self.ghostlogic)
-        clyde_x, clyde_y = self.ghostlogic.my_cell(self.blinky)
+            self.go_to_tile(self.inky, 2*x - blinky_x, 2*(y+2) - blinky_y,
+                            self.ghostlogic)
 
+    def chase_clyde(self) -> None:
+        x, y = self.ghostlogic.my_cell(self.pacman)
+        blinky_x, blinky_y = self.ghostlogic.my_cell(self.blinky)
         # Clyde has two targets, if he is far from pacman he behaves
         # like Blinky, but when he is closer than 8 cells he goes to his
         # "corner"
-        # if self.ghostlogic.distance(x, y, clyde_x, clyde_y) > 8:
-        #     self.go_to_tile(self.clyde, x, y, self.ghostlogic)
-        # else:
-        #     self.go_to_tile(self.clyde, 2, 31, self.ghostlogic)
-
-    def frightened(self) -> None:
-        self.is_frightened = True
-        self.frightened_timer = time.time()
-        print('frightened')
+        if self.ghostlogic.distance(x, y, blinky_x, blinky_y) > 8:
+            self.go_to_tile(self.clyde, x, y, self.ghostlogic)
+        else:
+            self.go_to_tile(self.clyde, 2, 31, self.ghostlogic)
 
     def tile_left(self, ghostlogic: GhostDetectingWalls, ghost: Ghost,
                   left_dist: float,

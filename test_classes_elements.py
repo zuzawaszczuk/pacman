@@ -115,6 +115,15 @@ def test_ghost_set_next_tile():
     assert ghost.next_tile == (1, 1)
 
 
+def test_ghost_reset_next_tile():
+    ghost = Ghost(100, 150, 2.6, 9, "blinky")
+    assert ghost.next_tile == (5, 8)
+    ghost.set_next_tile(1, 1)
+    assert ghost.next_tile == (1, 1)
+    ghost.reset_next_tile()
+    assert ghost.next_tile == (5, 8)
+
+
 def test_ghost_left():
     ghost = Ghost(100, 150, 2.6, 9, "blinky")
     assert ghost.next_tile == (5, 8)

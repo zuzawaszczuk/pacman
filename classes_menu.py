@@ -61,10 +61,10 @@ class Menu():
                        cells: List[List[int]]) -> None:
 
         copy_cells = copy.deepcopy(cells)
-        blinky = Ghost(width // 2, 200, 2.5, 8, "blinky")
-        inky = Ghost(width // 2 - 30, 260, 2.5, 8, "inky")
-        pinky = Ghost(width // 2, 260, 2.5, 8, "pinky")
-        clyde = Ghost(width // 2 + 30, 260, 2.5, 8, "clyde")
+        blinky = Ghost(width // 2, 200, 2.5, 9, "blinky")
+        inky = Ghost(width // 2 - 30, 260, 2.5, 9, "inky")
+        pinky = Ghost(width // 2, 260, 2.5, 9, "pinky")
+        clyde = Ghost(width // 2 + 30, 260, 2.5, 9, "clyde")
         ghosts = [blinky, inky, pinky, clyde]
         pacman = Pacman(width // 2, 315, 3, 10)
         board = Board(copy_cells)
