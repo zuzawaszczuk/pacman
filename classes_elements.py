@@ -52,13 +52,13 @@ class Pacman(Character):
 
 class Ghost(Character):
     def __init__(self, x: float, y: float, speed: float, radius: int,
-                 name: str, is_dead: bool = False, is_scared: bool = False,
+                 name: str, is_dead: bool = False, is_frightened: bool = False,
                  at_home: bool = True, going_out: bool = False,
                  next_tile: Union[Tuple[int, int], None] = None) -> None:
         super().__init__(x, y, speed, radius)
         self.name = name
         self._is_dead = is_dead
-        self._is_scared = is_scared
+        self._is_frightened = is_frightened
         self._at_home = at_home
         self._going_out = going_out
         if next_tile is None:
@@ -81,14 +81,14 @@ class Ghost(Character):
         self._is_dead = False
 
     @property
-    def is_scared(self) -> bool:
-        return self._is_scared
+    def is_frightened(self) -> bool:
+        return self._is_frightened
 
-    def scared(self) -> None:
-        self._is_scared = True
+    def frightened(self) -> None:
+        self._is_frightened = True
 
-    def not_scared(self) -> None:
-        self._is_scared = False
+    def not_frightened(self) -> None:
+        self._is_frightened = False
 
     @property
     def at_home(self) -> bool:

@@ -1,7 +1,7 @@
 import pygame
 from math import pi
 import math
-import time
+import random
 from typing import List, Tuple
 from classes_elements import Pacman, Board, Ghost, Points, Character
 
@@ -34,9 +34,6 @@ class CellLogic():
         x = int(player.x//18)
         y = int(player.y//18)
         return (x, y)
-
-    def collision(self, player1: Character, player2: Character) -> bool:
-        return self.my_cell(player1) == self.my_cell(player2)
 
 
 class ElementMover(CellLogic):
@@ -148,14 +145,22 @@ class GhostDetectingWalls(CellLogic):
     def distance(self, ax: float, ay: float, bx: float, by: float) -> float:
         return math.sqrt((bx - ax) ** 2 + (by - ay) ** 2)
 
+    def collision(self, player1: Character, player2: Character) -> bool:
+        return ((self.compute_current_tile(player1) ==
+                self.compute_current_tile(player2)) or
+                (self.my_cell(player1) ==
+                self.my_cell(player2)))
+
 
 class PacmanLogic(CellLogic):
-    def eats_points(self, pacman: Pacman, points: Points) -> None:
+    def eats_points(self, pacman: Pacman, points: Points) -> bool:
         x, y = self.my_cell(pacman)
         if self.board.is_point(y, x):
             self.board.set_cell(y, x, 0)
             points.add_to_score(10)
             points.one_point_eaten()
+            return True
+        return False
 
     def eats_super_points(self, pacman: Pacman, points: Points) -> bool:
         x, y = self.my_cell(pacman)
@@ -167,13 +172,13 @@ class PacmanLogic(CellLogic):
         return False
 
 
-class AllGhostAction():
+class NormalGhostAction():
     def __init__(self, ghosts: List[Ghost], ghostlogic: GhostDetectingWalls,
-                 pacman: Pacman, points: Points) -> None:
+                 pacman: Pacman, dot_counter: int) -> None:
         self.ghosts = ghosts
         self.ghostlogic = ghostlogic
         self.pacman = pacman
-        self.points = points
+        self.dot_counter = dot_counter
 
         self.blinky = ghosts[0]
         self.inky = ghosts[1]
@@ -182,13 +187,10 @@ class AllGhostAction():
         self.one = True
         self.two = True
         self.three = True
-        self.start_time = time.time()
         self.is_frightened = False
         self.frightened_timer = 0.0
 
-    def run(self) -> None:
-        timer = time.time() - self.start_time
-        print(timer)
+    def run(self, timer) -> None:
         self.activate_ghost_to_go_out()
         if timer < 7:
             self.scatter()
@@ -220,20 +222,23 @@ class AllGhostAction():
             self.chase()
 
     def activate_ghost_to_go_out(self):
-        if self.blinky.at_home:
+        if self.blinky.at_home and not self.blinky.is_dead:
             self.blinky.set_next_tile(14, 11)
             self.blinky.right()
             self.blinky.out_of_home()
 
-        if self.pinky.at_home or self.pinky.going_out:
+        if (self.pinky.at_home or self.pinky.going_out) \
+                and not self.pinky.is_dead:
             self.go_out(self.pinky)
 
         if (self.inky.at_home or self.inky.going_out) \
-                and self.points.points_to_win < 200:
+                and self.dot_counter > 17 \
+                and not self.inky.is_dead:
             self.go_out(self.inky)
 
         if (self.clyde.at_home or self.clyde.going_out) \
-                and self.points.points_to_win < 150:
+                and self.dot_counter > 32 \
+                and not self.clyde.is_dead:
             self.go_out(self.clyde)
 
     def go_home(self) -> None:
@@ -242,7 +247,11 @@ class AllGhostAction():
         self.pinky.set_cord(28*9, 260)
         self.clyde.set_cord(28*9 + 30, 260)
         for ghost in self.ghosts:
+            ghost.speed = 2.3
+            ghost.end_going_out()
             ghost.back_at_home()
+            ghost.is_alive()
+            ghost.not_frightened()
             ghost.reset_next_tile()
 
     def go_out(self, ghost: Ghost) -> None:
@@ -266,6 +275,8 @@ class AllGhostAction():
             ghost.end_going_out()
 
     def reverse_direction(self, ghost: Ghost) -> None:
+        if ghost.is_dead:
+            return 0
         change = {
             0: pi,
             pi/2: 1.5*pi,
@@ -278,8 +289,6 @@ class AllGhostAction():
 
     def go_to_tile(self, ghost: Ghost, tile_x: int, tile_y: int,
                    ghostlogic: GhostDetectingWalls):
-        print(f"next {ghost.next_tile} current \
-               {ghostlogic.compute_current_tile(ghost)}")
         if ghost.next_tile != ghostlogic.compute_current_tile(ghost):
             return 0
         x, y = ghostlogic.compute_current_tile(ghost)
@@ -297,24 +306,28 @@ class AllGhostAction():
         elif ghost.angle == 1.5*pi:
             self.tile_down(ghostlogic, ghost, left_dist, right_dist, down_dist)
 
+    def normal(self, ghost: Ghost) -> bool:
+        return not (ghost.at_home or ghost.going_out
+                    or ghost.is_dead)
+
     def scatter(self) -> None:
-        if (self.blinky.at_home or self.blinky.going_out) is False:
+        if self.normal(self.blinky):
             self.go_to_tile(self.blinky, 27, 0, self.ghostlogic)
-        if (self.pinky.at_home or self.pinky.going_out) is False:
+        if self.normal(self.pinky):
             self.go_to_tile(self.pinky, 2, 0, self.ghostlogic)
-        if (self.inky.at_home or self.inky.going_out) is False:
+        if self.normal(self.inky):
             self.go_to_tile(self.inky, 27, 31, self.ghostlogic)
-        if (self.clyde.at_home or self.clyde.going_out) is False:
+        if self.normal(self.clyde):
             self.go_to_tile(self.clyde, 2, 31, self.ghostlogic)
 
     def chase(self) -> None:
-        if (self.blinky.at_home or self.blinky.going_out) is False:
+        if self.normal(self.blinky):
             self.chase_blinky()
-        if (self.pinky.at_home or self.pinky.going_out) is False:
+        if self.normal(self.pinky):
             self.chase_pinky()
-        if (self.inky.at_home or self.inky.going_out) is False:
+        if self.normal(self.inky):
             self.chase_inky()
-        if (self.clyde.at_home or self.clyde.going_out) is False:
+        if self.normal(self.clyde):
             self.chase_clyde()
 
     def chase_blinky(self) -> None:
@@ -366,9 +379,6 @@ class AllGhostAction():
     def tile_left(self, ghostlogic: GhostDetectingWalls, ghost: Ghost,
                   left_dist: float,
                   up_dist: float, down_dist: float) -> None:
-        print(f'tile left up{ghostlogic.up_wall(ghost)} \
-               down{ghostlogic.down_wall(ghost)} \
-                left{ghostlogic.left_wall(ghost)}')
         min_dist = min(left_dist, up_dist, down_dist)
         if (ghostlogic.up_wall(ghost) or ghostlogic.down_wall(ghost)) is False:
             # Case 1 only one step is possible so we do it
@@ -411,9 +421,6 @@ class AllGhostAction():
     def tile_right(self, ghostlogic: GhostDetectingWalls, ghost: Ghost,
                    right_dist: float, up_dist: float,
                    down_dist: float) -> None:
-        print(f'tile right up{ghostlogic.up_wall(ghost)} \
-              down{ghostlogic.down_wall(ghost)} \
-                right{ghostlogic.right_wall(ghost)}')
         min_dist = min(right_dist, up_dist, down_dist)
         if (ghostlogic.up_wall(ghost) or ghostlogic.down_wall(ghost)) is False:
             # RIGHT
@@ -423,24 +430,20 @@ class AllGhostAction():
                 # RIGHT or DOWN or UP
                 if up_dist == min_dist:
                     ghost.up()
-                    print("up2")
                 elif down_dist == min_dist:
                     ghost.down()
-                    print("down3")
                 else:
                     ghost.right()
             elif ghostlogic.up_wall(ghost):
                 # UP or RIGHT
                 if up_dist < right_dist:
                     ghost.up()
-                    print("up4")
                 else:
                     ghost.right()
             elif ghostlogic.down_wall(ghost):
                 # DOWN OR RIGHT
                 if down_dist < right_dist:
                     ghost.down()
-                    print("down5")
                 else:
                     ghost.right()
         else:
@@ -459,9 +462,6 @@ class AllGhostAction():
 
     def tile_up(self, ghostlogic: GhostDetectingWalls, ghost: Ghost,
                 left_dist: float, up_dist: float, right_dist: float) -> None:
-        print(f'tile UP up{ghostlogic.up_wall(ghost)}\
-               right{ghostlogic.right_wall(ghost)} \
-                left{ghostlogic.left_wall(ghost)}')
         min_dist = min(left_dist, up_dist, right_dist)
         if (ghostlogic.left_wall(ghost) or ghostlogic.right_wall(ghost)) \
                 is False:
@@ -505,9 +505,6 @@ class AllGhostAction():
     def tile_down(self, ghostlogic: GhostDetectingWalls, ghost: Ghost,
                   left_dist: float, right_dist: float,
                   down_dist: float) -> None:
-        print(f'tile DOWN right{ghostlogic.right_wall(ghost)}\
-               down{ghostlogic.down_wall(ghost)} \
-                left{ghostlogic.left_wall(ghost)}')
         min_dist = min(left_dist, down_dist, right_dist)
         if (ghostlogic.right_wall(ghost) or ghostlogic.left_wall(ghost))\
                 is False:
@@ -547,3 +544,104 @@ class AllGhostAction():
             else:
                 # RIGHT
                 ghost.right()
+
+    def correct_next_tile(self, ghostlogic: GhostDetectingWalls,
+                          ghost: Ghost) -> None:
+        x, y = ghostlogic.compute_current_tile(ghost)
+        next_x, next_y = ghost.next_tile
+        if ghost.angle == pi and (x - next_x > 1 or x - next_x > 0):
+            ghost.set_next_tile(x-1, y)
+        elif ghost.angle == 0 and (next_x - x > 1 or next_x - x > 0):
+            ghost.set_next_tile(x+1, y)
+        elif ghost.angle == pi/2 and (y - next_y > 1 or y - next_y > 0):
+            ghost.set_next_tile(x, y-1)
+        elif ghost.angle == 1.5*pi and (next_y - y > 1 or next_y - y > 0):
+            ghost.set_next_tile(x, y+1)
+
+
+class FrightenedGhostAction():
+    def __init__(self, ghosts: List[Ghost], ghostlogic: GhostDetectingWalls,
+                 pacman: Pacman) -> None:
+        self.ghosts = ghosts
+        self.ghostlogic = ghostlogic
+        self.pacman = pacman
+
+    def run(self) -> None:
+        for ghost in self.ghosts:
+            if not ghost.is_frightened and not ghost.is_dead:
+                ghost.reset_next_tile()
+                ghost.speed = 1.5
+                ghost.frightened()
+            if not ghost.is_dead:
+                self.random_moves(ghost)
+
+    def random_moves(self, ghost: Ghost) -> None:
+        if ghost.next_tile != self.ghostlogic.compute_current_tile(ghost):
+            return 0
+        possible_moves = self.compute_possible_moves(ghost)
+        reverse = {
+            0: pi,
+            pi/2: 1.5*pi,
+            pi: 0,
+            1.5*pi: pi/2
+        }
+        if reverse[ghost.angle] in possible_moves:
+            possible_moves.remove(reverse[ghost.angle])
+        if len(possible_moves) == 0:
+            return 0
+        move = random.choice(possible_moves)
+        if move == pi:
+            ghost.left()
+        elif move == 0:
+            ghost.right()
+        elif move == pi/2:
+            ghost.up()
+        elif move == 1.5*pi:
+            ghost.down()
+
+    def compute_possible_moves(self, ghost: Ghost) -> List[float]:
+        possible_moves = []
+        if self.ghostlogic.left_wall(ghost):
+            possible_moves.append(pi)
+        if self.ghostlogic.right_wall(ghost):
+            possible_moves.append(0)
+        if self.ghostlogic.down_wall(ghost):
+            possible_moves.append(1.5*pi)
+        if self.ghostlogic.up_wall(ghost):
+            possible_moves.append(pi/2)
+        return possible_moves
+
+    def back_to_normal(self) -> None:
+        for ghost in self.ghosts:
+            if not ghost.is_dead:
+                ghost.reset_next_tile()
+                ghost.speed = 2.3
+                ghost.not_frightened()
+
+
+class DeadGhostAction(NormalGhostAction):
+    def __init__(self, ghosts: List[Ghost],
+                 ghostlogic: GhostDetectingWalls) -> None:
+        self.ghosts = ghosts
+        self.ghostlogic = ghostlogic
+
+    def dead_ghosts_go_back(self):
+        for ghost in self.ghosts:
+            if ghost.is_dead:
+                ghost.speed = 4
+                self.dead_go_home(ghost)
+
+    def dead_go_home(self, ghost) -> None:
+        x, y = self.ghostlogic.compute_current_tile(ghost)
+        if not ghost.going_out:
+            self.go_to_tile(ghost, 14, 11, self.ghostlogic)
+            if (14, 11) == (x, y):
+                ghost.start_going_out()
+                ghost.change_direction(1.5*pi)
+        elif y < 14 and ghost.name != "blinky":
+            ghost.y += ghost.speed
+        else:
+            ghost.speed = 2.3
+            ghost.back_at_home()
+            ghost.end_going_out()
+            ghost.is_alive()

@@ -40,15 +40,6 @@ def test_cell_logic_my_cell():
     assert celllogic.my_cell(pacman) == (2, 1)
 
 
-def test_cell_logic_collision():
-    celllogic = CellLogic(cells)
-    pacman = Pacman(40, 20, 2, 10)
-    ghost = Pacman(40, 20, 2, 10)
-    assert celllogic.collision(pacman, ghost) is True
-    ghost.x = 100
-    assert celllogic.collision(pacman, ghost) is False
-
-
 def test_rigth_space_true():
     pacman = Pacman(100, 30, 3, 10)
     board = Board(cells)
@@ -278,6 +269,40 @@ def test_ghost_detects_distance():
     board = Board(cells)
     ghostdetects = GhostDetectingWalls(board)
     assert ghostdetects.distance(1, 1, 4, 5) == 5
+
+
+def test_cell_logic_collision_same_place():
+    board = Board(cells)
+    ghostdetects = GhostDetectingWalls(board)
+    pacman = Pacman(40, 20, 2, 10)
+    ghost = Pacman(40, 20, 2, 10)
+    assert ghostdetects.collision(pacman, ghost) is True
+    ghost.x = 100
+    assert ghostdetects.collision(pacman, ghost) is False
+
+
+def test_cell_logic_collision_close():
+    board = Board(cells)
+    ghostdetects = GhostDetectingWalls(board)
+    pacman = Pacman(40, 20, 2, 10)
+    ghost = Pacman(30, 20, 2, 10)
+    assert ghostdetects.collision(pacman, ghost) is True
+
+
+def test_cell_logic_collision_close_cross():
+    board = Board(cells)
+    ghostdetects = GhostDetectingWalls(board)
+    pacman = Pacman(40, 20, 2, 10)
+    ghost = Pacman(35, 25, 2, 10)
+    assert ghostdetects.collision(pacman, ghost) is True
+
+
+def test_cell_logic_collision_next_to():
+    board = Board(cells)
+    ghostdetects = GhostDetectingWalls(board)
+    pacman = Pacman(40, 20, 2, 10)
+    ghost = Pacman(25, 20, 2, 10)
+    assert ghostdetects.collision(pacman, ghost) is False
 
 
 def test_pacman_logic_eats():

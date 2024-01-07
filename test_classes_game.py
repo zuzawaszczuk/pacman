@@ -41,6 +41,20 @@ def test_game_running():
     assert game.running is True
 
 
+def test_game_frightened_mode():
+    pacman = Pacman(50, 50, 4, 5)
+    clock = pygame.time.Clock()
+    board = Board(cells)
+    ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
+    ghosts = [ghost]
+    game = Game(pacman, board, ghosts, 10, 10, 10, clock, colors, 50, 50)
+    assert game.is_frightened is False
+    game.turn_on_frightened_mode()
+    assert game.is_frightened is True
+    game.turn_off_frightened_mode()
+    assert game.is_frightened is False
+
+
 def test_event_handler_init():
     pacman = Pacman(50, 50, 4, 5)
     event_handler = EventHandler(pacman)

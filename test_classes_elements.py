@@ -57,7 +57,7 @@ def test_ghost_init():
     assert ghost.radius == 9
     assert ghost.name == "blinky"
     assert ghost.is_dead is False
-    assert ghost.is_scared is False
+    assert ghost.is_frightened is False
     assert ghost.at_home is True
     assert ghost.going_out is False
     assert ghost.next_tile == (5, 8)
@@ -81,13 +81,13 @@ def test_ghost_dead_is_alive():
     assert ghost.is_dead is False
 
 
-def test_ghost_scared_not_scared():
+def test_ghost_scared_not_frightened():
     ghost = Ghost(100, 150, 2.6, 9, "blinky")
-    assert ghost.is_scared is False
-    ghost.scared()
-    assert ghost.is_scared is True
-    ghost.not_scared()
-    assert ghost.is_scared is False
+    assert ghost.is_frightened is False
+    ghost.frightened()
+    assert ghost.is_frightened is True
+    ghost.not_frightened()
+    assert ghost.is_frightened is False
 
 
 def test_ghost_out_of_home_back_at_home():

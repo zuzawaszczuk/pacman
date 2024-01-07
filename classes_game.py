@@ -1,13 +1,14 @@
 import pygame
 import sys
+import time
 from math import pi
 from classes_button import Button
 from typing import List, Tuple, Dict
 from pygame.surface import Surface
 from pygame.time import Clock
 from classes_elements import Pacman, Board, Ghost, Points
-from classes_logic import ElementMover, GhostDetectingWalls, AllGhostAction
-from classes_logic import PacmanLogic
+from classes_logic import ElementMover, GhostDetectingWalls, NormalGhostAction
+from classes_logic import PacmanLogic, FrightenedGhostAction, DeadGhostAction
 TColor = Tuple[int, int, int]
 
 
@@ -16,7 +17,8 @@ class Game():
                  screen: Surface, board_surface: Surface,
                  pacman_surface: Surface, clock: Clock,
                  colors: Dict[str, TColor],
-                 width: int, height: int, points: Points = Points()) -> None:
+                 width: int, height: int, points: Points = Points(),
+                 frightened_mode: bool = False, past_time: float = 0) -> None:
         self.pacman = pacman
         self.board = board
         self.ghosts = ghosts
@@ -28,45 +30,78 @@ class Game():
         self.width = width
         self.height = height
         self.points = points
+        self._frightened_mode = frightened_mode
+        self.past_time = past_time
         self._running = True
-        self.frightened = False
+        self.start_time = time.time()
+        self.frightened_time = 0
+        self.current_duraction = 0
 
     def run(self) -> None:
         undone = True
         tick = 30.0
+        self.start_time = time.time()
+        self.current_duraction = 0
         button = Button("MENU", 400, 0, 23, 100, 40, self.back_to_menu)
         elementmover = ElementMover(self.board)
         ghostlogic = GhostDetectingWalls(self.board)
         pacmanlogic = PacmanLogic(self.board)
-        allghosts = AllGhostAction(self.ghosts, ghostlogic, self.pacman,
-                                   self.points)
+        normalghostsaction = NormalGhostAction(self.ghosts, ghostlogic,
+                                               self.pacman, 0)
+        frightenedghostsaction = FrightenedGhostAction(self.ghosts, ghostlogic,
+                                                       self.pacman)
+        deadghostsaction = DeadGhostAction(self.ghosts, ghostlogic)
         while self.running:
+            self.current_duraction = time.time() - self.start_time
+            timer = self.past_time + self.current_duraction
+
             elementmover.moves(self.pacman)
-            pacmanlogic.eats_points(self.pacman, self.points)
+            if pacmanlogic.eats_points(self.pacman, self.points):
+                normalghostsaction.dot_counter += 1
 
             # Action in game connected with pacman eating super point
             if pacmanlogic.eats_super_points(self.pacman, self.points):
-                pass
+                self.turn_on_frightened_mode()
+                self.past_time -= 6
+                self.frightened_time = timer
+
+            # Logic of ghosts moves
+            if self.is_frightened:
+                frightenedghostsaction.run()
+                if timer > self.frightened_time:
+                    frightenedghostsaction.back_to_normal()
+                    self.turn_off_frightened_mode()
+
+            if not self.is_frightened:
+                normalghostsaction.run(timer)
+
+            deadghostsaction.dead_ghosts_go_back()
 
             door = False
             # Checks collison beetween pacman and ghots
             for ghost in self.ghosts:
+                normalghostsaction.correct_next_tile(ghostlogic, ghost)
                 if (not ghost.at_home and not ghost.going_out) or \
-                     (ghost.at_home and ghost.going_out):
+                        (ghost.at_home and ghost.going_out):
                     # Ghost is moving, when he is out of home and already go
                     # through door or is inside home and goes out move to door
                     elementmover.moves(ghost)
                 if ghost.going_out:
                     door = True
 
-                if pacmanlogic.collision(ghost, self.pacman):
-                    self.pacman.lives -= 1
-                    allghosts.go_home()
-                    self.pacman.go_home()
-                    tick = 0.25
-
-            # Logic of ghosts moves
-            allghosts.run()
+                if ghostlogic.collision(ghost, self.pacman):
+                    if not self.is_frightened and not ghost.is_dead:
+                        self.pacman.lives -= 1
+                        normalghostsaction.go_home()
+                        self.pacman.go_home()
+                        normalghostsaction.dot_counter = 0
+                        door = False
+                        tick = 0.25
+                    elif not ghost.is_dead:
+                        normalghostsaction.dot_counter = 0
+                        ghost.not_frightened()
+                        ghost.dead()
+                        self.points.add_to_score(200)
 
             # Collecting 4 super points gives additional life
             if undone is True and self.points.super_point_left == 0:
@@ -125,7 +160,8 @@ class Game():
     def running(self) -> bool:
         return self._running
 
-    def not_running(self) -> None:
+    def not_running(self,) -> None:
+        self.past_time += self.current_duraction
         self._running = False
 
     def running_again(self) -> None:
@@ -133,6 +169,16 @@ class Game():
 
     def back_to_menu(self) -> None:
         self.not_running()
+
+    @property
+    def is_frightened(self) -> bool:
+        return self._frightened_mode
+
+    def turn_on_frightened_mode(self) -> None:
+        self._frightened_mode = True
+
+    def turn_off_frightened_mode(self) -> None:
+        self._frightened_mode = False
 
 
 class EventHandler():
@@ -176,11 +222,11 @@ class Renderer():
 
     def render_ghosts(self, ghosts: List[Ghost]) -> None:
         for ghost in ghosts:
-            width = 2*ghost.radius + 6
-            if ghost.is_scared:
-                image = pygame.image.load("ghosts/scared.png")
-            elif ghost.is_dead:
+            width = 2*ghost.radius + 8
+            if ghost.is_dead:
                 image = pygame.image.load("ghosts/dead.png")
+            elif ghost.is_frightened:
+                image = pygame.image.load("ghosts/frightened.png")
             else:
                 image = pygame.image.load(f"ghosts/{ghost.name}.png")
             scaled_image = pygame.transform.scale(image, (width, width))
