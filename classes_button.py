@@ -32,6 +32,6 @@ class Button():
         pygame.font.init()
         myfont = pygame.font.Font('arcade_font.ttf', self.size)
         label = myfont.render(self.text, 1, colors['blue'])
-        screen.blit(label, (self.x, self.y))
+        screen.blit(label, (self.x + 5, self.y + 6))
         pygame.draw.rect(screen, colors['blue'],
-                         (self.x, self.y, self.width, self.height), 1)
+                         (self.x, self.y + 1, self.width, self.height), 2)

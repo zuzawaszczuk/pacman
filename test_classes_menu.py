@@ -24,8 +24,11 @@ def test_menu_init():
         return Mock()
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
-    menu = Menu(5, buttons)
+    clock = pygame.time.Clock()
+    menu = Menu(5, 10, clock, buttons)
     assert menu.colors == 5
+    assert menu.screen == 10
+    assert menu.clock == clock
     assert menu.buttons == buttons
 
 
@@ -34,8 +37,11 @@ def test_menu_set_buttons():
         return Mock()
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
-    menu = Menu(5)
+    clock = pygame.time.Clock()
+    menu = Menu(5, 10, clock)
     assert menu.colors == 5
+    assert menu.screen == 10
+    assert menu.clock == clock
     assert menu.buttons == []
     menu.set_buttons(buttons)
     assert menu.buttons == buttons
@@ -46,5 +52,6 @@ def test_menu_init_current_game():
         return Mock()
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
-    menu = Menu(5, buttons)
+    clock = pygame.time.Clock()
+    menu = Menu(5, 10, clock, buttons)
     assert menu.current_game is None
