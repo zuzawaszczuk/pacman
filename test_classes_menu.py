@@ -25,10 +25,15 @@ def test_menu_init():
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
     clock = pygame.time.Clock()
-    menu = Menu(5, 10, clock, buttons)
+    menu = Menu(5, 10, "board_surface", "pacman_surface", clock,
+                100, 100, buttons)
     assert menu.colors == 5
     assert menu.screen == 10
+    assert menu.board_surface == "board_surface"
+    assert menu.pacman_surface == "pacman_surface"
     assert menu.clock == clock
+    assert menu.width == 100
+    assert menu.height == 100
     assert menu.buttons == buttons
 
 
@@ -38,10 +43,15 @@ def test_menu_set_buttons():
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
     clock = pygame.time.Clock()
-    menu = Menu(5, 10, clock)
+    menu = Menu(5, 10, "board_surface", "pacman_surface", clock,
+                100, 100)
     assert menu.colors == 5
     assert menu.screen == 10
+    assert menu.board_surface == "board_surface"
+    assert menu.pacman_surface == "pacman_surface"
     assert menu.clock == clock
+    assert menu.width == 100
+    assert menu.height == 100
     assert menu.buttons == []
     menu.set_buttons(buttons)
     assert menu.buttons == buttons
@@ -53,5 +63,6 @@ def test_menu_init_current_game():
     button = Button("Text", 0, 0, 2, 100, 100, command, 5)
     buttons = [button]
     clock = pygame.time.Clock()
-    menu = Menu(5, 10, clock, buttons)
+    menu = Menu(5, 10, "board_surface", "pacman_surface", clock,
+                100, 100, buttons)
     assert menu.current_game is None

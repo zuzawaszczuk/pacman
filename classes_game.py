@@ -3,28 +3,31 @@ import sys
 import time
 from math import pi
 from classes_button import Button
-from typing import List, Tuple, Dict
+from collections.abc import Mapping
+from typing import List, Tuple, Dict, Union
 from pygame.surface import Surface
 from pygame.time import Clock
 from classes_elements import Pacman, Board, Ghost, Points
 from classes_logic import ElementMover, GhostDetectingWalls, NormalGhostAction
 from classes_logic import PacmanLogic, FrightenedGhostAction, DeadGhostAction
 TColor = Tuple[int, int, int]
+TBoard = Mapping[str, List[List[int]]]
+TPacman = Mapping[str, Union[float, int]]
+TGhost = Mapping[str, Union[float, int, bool, Tuple[int, int]]]
+TGhosts = Mapping[str, TGhost]
+TPoints = Mapping[str, int]
+TGame = Mapping[str, Union[bool, float, TBoard, TPacman, TPoints, TGhosts]]
 
 
 class Game():
     def __init__(self, pacman: Pacman, board: Board, ghosts: List[Ghost],
-                 screen: Surface, board_surface: Surface,
-                 pacman_surface: Surface, clock: Clock,
-                 colors: Dict[str, TColor],
+                 clock: Clock, colors: Dict[str, TColor],
                  width: int, height: int, points: Points = Points(),
-                 frightened_mode: bool = False, past_time: float = 0) -> None:
+                 frightened_mode: bool = False, past_time: float = 0.0,
+                 frightened_time: float = 0.0) -> None:
         self.pacman = pacman
         self.board = board
         self.ghosts = ghosts
-        self.screen = screen
-        self.board_surface = board_surface
-        self.pacman_surface = pacman_surface
         self.clock = clock
         self.colors = colors
         self.width = width
@@ -34,10 +37,11 @@ class Game():
         self.past_time = past_time
         self._running = True
         self.start_time = time.time()
-        self.frightened_time = 0
-        self.current_duraction = 0
+        self.frightened_time = frightened_time
+        self.current_duraction = 0.0
 
-    def run(self) -> None:
+    def run(self, screen: Surface, board_surface: Surface,
+            pacman_surface: Surface) -> None:
         undone = True
         tick = 30.0
         self.start_time = time.time()
@@ -116,8 +120,8 @@ class Game():
                 button.handle_event(event)
 
             # Renders consequences of game logic on surfaces
-            renderer = Renderer(self.screen, self.board_surface,
-                                self.pacman_surface, self.colors)
+            renderer = Renderer(screen, board_surface,
+                                pacman_surface, self.colors)
             # Cleans surfaces
             renderer.cleans_surfaces()
 
@@ -128,17 +132,17 @@ class Game():
 
             # Scales board surface to bigger one
             scaled_board_surface = pygame.transform.scale(
-                self.board_surface, (self.width, self.height))
+                board_surface, (self.width, self.height))
 
             # Puts surfaces on screen
-            self.screen.blit(scaled_board_surface, (0, 40))
-            self.screen.blit(self.pacman_surface, (0, 40))
+            screen.blit(scaled_board_surface, (0, 40))
+            screen.blit(pacman_surface, (0, 40))
 
             # On top of surfaces last renders to draw on screen
             renderer.render_score(self.points.score)
             renderer.render_lives(self.pacman)
             renderer.render_high_score(self.points.high_score)
-            button.draw(self.screen, self.colors)
+            button.draw(screen, self.colors)
 
             # Checks if player won
             if self.points.points_to_win == 0:
@@ -265,3 +269,132 @@ class Renderer():
         label = myfont.render("YOU LOST!;(", 1, self.colors['red'])
         pygame.draw.rect(self.screen, self.colors['black'], [0, 200, 600, 230])
         self.screen.blit(label, (20, 280))
+
+
+class Serializer():
+    def __init__(self, game: Game):
+        self.game = game
+
+    def serialize(self) -> TGame:
+        dict_game: TGame = {
+            'pacman': self.serialize_pacman(),
+            'board': self.serialize_board(),
+            'ghosts': self.serialize_ghosts(),
+            'points': self.serialize_points(),
+            'frightened': self.game.is_frightened,
+            'past_time': self.game.past_time,
+            'frightened_time': self.game.frightened_time
+        }
+        return dict_game
+
+    def serialize_pacman(self) -> TPacman:
+        dict_pacman = {
+            'x': self.game.pacman.x,
+            'y': self.game.pacman.y,
+            'speed': self.game.pacman.speed,
+            'radius': self.game.pacman.radius,
+            'lives': self.game.pacman.lives
+        }
+        return dict_pacman
+
+    def serialize_board(self) -> TBoard:
+        dict_board = {
+            'cells': self.game.board.cells
+        }
+        return dict_board
+
+    def serialize_ghosts(self) -> TGhosts:
+        dict_ghosts = {
+            self.game.ghosts[0].name:
+            self.serialize_ghost(self.game.ghosts[0]),
+            self.game.ghosts[1].name:
+            self.serialize_ghost(self.game.ghosts[1]),
+            self.game.ghosts[2].name:
+            self.serialize_ghost(self.game.ghosts[2]),
+            self.game.ghosts[3].name:
+            self.serialize_ghost(self.game.ghosts[3]),
+        }
+        return dict_ghosts
+
+    def serialize_ghost(self, ghost: Ghost) -> TGhost:
+        dict_ghost: TGhost = {
+            "x": ghost.x,
+            "y": ghost.y,
+            "speed": ghost.speed,
+            "radius": ghost.radius,
+            "is_dead": ghost.is_dead,
+            "is_frightened": ghost.is_frightened,
+            "at_home": ghost.at_home,
+            "going_out": ghost.going_out,
+            "next_tile": ghost.next_tile
+        }
+        return dict_ghost
+
+    def serialize_points(self) -> TPoints:
+        dict_points = {
+            'score': self.game.points.score,
+            'points_to_win': self.game.points.points_to_win,
+            'super_point_left': self.game.points.super_point_left,
+            'high_score': self.game.points.high_score
+        }
+        return dict_points
+
+
+class Deserializer():
+    def deserialize(self, data: TGame, clock, colors, width, height):
+        pacman = self.deserialize_pacman(data['pacman'])
+        board = self.deserialize_board(data['board'])
+        ghosts = self.deserialize_ghosts(data['ghosts'])
+        points = self.deserialize_points(data['points'])
+        is_frightened = data['frightened']
+        past_time = data['past_time']
+        frightened_time = data['frightened_time']
+        game = Game(pacman, board, ghosts, clock, colors, width,
+                    height, points, is_frightened, past_time, frightened_time)
+        return game
+
+    def deserialize_pacman(self, data):
+        x = data['x']
+        y = data['y']
+        speed = data['speed']
+        radius = data['radius']
+        lives = data['lives']
+        pacman = Pacman(x, y, speed, radius, lives)
+        return pacman
+
+    def deserialize_board(self, data):
+        cells = data['cells']
+        board = Board(cells)
+        return board
+
+    def deserialize_ghosts(self, data):
+        ghosts = []
+        ghosts.append(self.deserialize_ghost(data['blinky'], 'blinky'))
+        ghosts.append(self.deserialize_ghost(data['pinky'], 'pinky'))
+        ghosts.append(self.deserialize_ghost(data['inky'], 'inky'))
+        ghosts.append(self.deserialize_ghost(data['clyde'], 'clyde'))
+        return ghosts
+
+    def deserialize_ghost(self, data, name):
+        x = float(data['x'])
+        y = float(data['y'])
+        speed = float(data['speed'])
+        radius = int(data['radius'])
+        is_dead = bool(data['is_dead'])
+        is_frightened = bool(data['is_frightened'])
+        at_home = bool(data['at_home'])
+        going_out = bool(data['going_out'])
+        next_tile = data['next_tile']
+
+        ghost = Ghost(x, y, speed, radius, name, is_dead, is_frightened,
+                      at_home, going_out, next_tile)
+        return ghost
+
+    def deserialize_points(self, data):
+        score = data['score']
+        points_to_win = data['points_to_win']
+        super_point_left = data['super_point_left']
+        high_score = data['high_score']
+
+        points = Points(score, points_to_win, super_point_left, high_score)
+        return points

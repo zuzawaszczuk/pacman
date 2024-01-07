@@ -1,7 +1,8 @@
 import pygame
 import sys
+import json
 from classes_elements import Board, Pacman, Ghost
-from classes_game import Game
+from classes_game import Game, Serializer, Deserializer
 from typing import Dict, Tuple, List
 from pygame.surface import Surface
 from pygame.time import Clock
@@ -14,15 +15,21 @@ TColor = Tuple[int, int, int]
 
 class Menu():
     def __init__(self, colors: Dict[str, TColor], screen: Surface,
-                 clock: Clock, buttons: List[Button] = []) -> None:
+                 board_surface: Surface, pacman_surface: Surface,
+                 clock: Clock, width: int, height: int,
+                 buttons: List[Button] = []) -> None:
 
         self.colors = colors
         self.screen = screen
+        self.board_surface = board_surface
+        self.pacman_surface = pacman_surface
         self.clock = clock
+        self.width = width
+        self.height = height
         self._buttons = buttons
-        self._current_game = None
+        self._current_game: Game | None = None
 
-    def run(self):
+    def run(self) -> None:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -38,26 +45,26 @@ class Menu():
             pygame.display.flip()
             self.clock.tick(30)
 
-    def set_buttons(self, buttons):
+    def set_buttons(self, buttons: List[Button]) -> None:
         self._buttons = buttons
 
     @property
-    def buttons(self):
+    def buttons(self) -> List[Button]:
         return self._buttons
 
     @property
-    def current_game(self):
+    def current_game(self) -> Game:
         return self._current_game
 
-    def set_game(self, game):
+    def set_game(self, game: Game | None) -> None:
         self._current_game = game
 
-    def run_current_game(self):
+    def run_current_game(self) -> None:
         self.current_game.running_again()
-        self.current_game.run()
+        self.current_game.run(self.screen,
+                              self.board_surface, self.pacman_surface)
 
-    def start_new_game(self, pacman_surface: Surface, board_surface: Surface,
-                       width: int, height: int,
+    def start_new_game(self, width: int, height: int,
                        cells: List[List[int]]) -> None:
 
         copy_cells = copy.deepcopy(cells)
@@ -68,9 +75,9 @@ class Menu():
         ghosts = [blinky, inky, pinky, clyde]
         pacman = Pacman(width // 2, 315, 3, 10)
         board = Board(copy_cells)
-        game = Game(pacman, board, ghosts, self.screen, board_surface,
-                    pacman_surface, self.clock, self.colors, width, height)
-        game.run()
+        game = Game(pacman, board, ghosts, self.clock, self.colors,
+                    self.width, self.height)
+        game.run(self.screen, self.board_surface, self.pacman_surface)
         self.set_game(game)
         self.run()
 
@@ -78,14 +85,100 @@ class Menu():
         self.run_current_game()
 
     def save_game(self):
-        pass
+        text = ("You cannot save the game because"
+                " no game is currently in progress.")
+        try:
+            if self.current_game is None:
+                raise ValueError(text)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return
+
+        try:
+            with open("saved_games.json", 'r') as file:
+                existing_data = json.load(file)
+        except FileNotFoundError:
+            existing_data = {}
+
+        keys_list = list(existing_data.keys())
+        user_input = self.gets_user_input_save(keys_list)
+        serializer = Serializer(self.current_game)
+        existing_data[user_input] = serializer.serialize()
+
+        with open("saved_games.json", 'w') as file:
+            json.dump(existing_data, file, indent=1)
+            print("Game state saved successfully!!")
 
     def load_game(self):
-        pass
+        try:
+            with open("saved_games.json", 'r') as file:
+                existing_data = json.load(file)
+        except FileNotFoundError:
+            existing_data = {}
+
+        if existing_data == {}:
+            print("No saved game states to load.")
+            return
+
+        keys_list = list(existing_data.keys())
+        print(f'Avaiable saves to load: {keys_list}')
+
+        save = self.gets_user_input_load(keys_list)
+
+        deserializer = Deserializer()
+        game = deserializer.deserialize(existing_data[save], self.clock,
+                                        self.colors, self.width, self.height)
+        game.run(self.screen, self.board_surface, self.pacman_surface)
 
     def exit_game(self):
         pygame.quit()
         sys.exit()
+
+    def gets_user_input_save(self, keys_list: List) -> str:
+        instruction = "Enter the name under which you want to save the game: "
+        while True:
+            try:
+                user_input = input(instruction)
+                if not user_input.strip():
+                    raise ValueError("You cannot enter an empty name.")
+                if user_input in keys_list:
+                    message = ("A game state is already saved under the name."
+                               "Do you want to overwrite it? (y/n): ")
+                    user_response = input(message)
+
+                    if user_response.lower() == 'y':
+                        print("Saving game state...")
+                        break
+                    else:
+                        print("Game state not overwritten."
+                              "Choose a different name!")
+                break
+            except ValueError as e:
+                print(f"Error: {e}")
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+        return user_input
+
+    def gets_user_input_load(self, keys_list: List) -> str:
+        instruction = "Enter the name of the saved game state you want to load"
+        while True:
+            try:
+                user_input = input(instruction)
+                if user_input not in keys_list:
+                    raise ValueError("Thids saved game state does not exist."
+                                     "Please enter a valid name.")
+                break
+            except ValueError as e:
+                print(f"Error: {e}")
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+        return user_input
 
     def draw(self):
         pygame.font.init()

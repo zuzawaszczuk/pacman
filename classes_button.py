@@ -24,7 +24,6 @@ class Button():
         if event.type == pygame.MOUSEBUTTONUP:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             if self.rect.collidepoint(mouse_x, mouse_y) and self.pushed == 1:
-                print("Przycisk został kliknięty!")
                 self.pushed = 0
                 self.command()
 

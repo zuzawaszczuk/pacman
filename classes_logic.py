@@ -2,7 +2,7 @@ import pygame
 from math import pi
 import math
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from classes_elements import Pacman, Board, Ghost, Points, Character
 
 
@@ -123,7 +123,8 @@ class GhostDetectingWalls(CellLogic):
         x, y = self.up_cell(player)
         return not self.board.is_wall(y, x)
 
-    def compute_current_tile(self, ghost: Ghost) -> Tuple[int, int]:
+    def compute_current_tile(self,
+                             ghost: Union[Ghost, Pacman]) -> Tuple[int, int]:
         if ghost.angle == pi:
             ghost.x += ghost.radius
             x, y = self.my_cell(ghost)
@@ -145,7 +146,9 @@ class GhostDetectingWalls(CellLogic):
     def distance(self, ax: float, ay: float, bx: float, by: float) -> float:
         return math.sqrt((bx - ax) ** 2 + (by - ay) ** 2)
 
-    def collision(self, player1: Character, player2: Character) -> bool:
+    def collision(self, player1: Ghost,
+                  player2: Union[Ghost, Pacman]) -> bool:
+
         return ((self.compute_current_tile(player1) ==
                 self.compute_current_tile(player2)) or
                 (self.my_cell(player1) ==
@@ -275,22 +278,21 @@ class NormalGhostAction():
             ghost.end_going_out()
 
     def reverse_direction(self, ghost: Ghost) -> None:
-        if ghost.is_dead:
-            return 0
         change = {
             0: pi,
             pi/2: 1.5*pi,
             pi: 0,
             1.5*pi: pi/2
         }
-        x, y = self.ghostlogic.compute_current_tile(ghost)
-        ghost.set_next_tile(x, y)
-        ghost.change_direction(change[ghost.angle])
+        if not ghost.is_dead:
+            x, y = self.ghostlogic.compute_current_tile(ghost)
+            ghost.set_next_tile(x, y)
+            ghost.change_direction(change[ghost.angle])
 
     def go_to_tile(self, ghost: Ghost, tile_x: int, tile_y: int,
                    ghostlogic: GhostDetectingWalls):
         if ghost.next_tile != ghostlogic.compute_current_tile(ghost):
-            return 0
+            return
         x, y = ghostlogic.compute_current_tile(ghost)
         # up > left > down
         left_dist = self.ghostlogic.distance(x-1, y, tile_x, tile_y)
@@ -577,7 +579,7 @@ class FrightenedGhostAction():
 
     def random_moves(self, ghost: Ghost) -> None:
         if ghost.next_tile != self.ghostlogic.compute_current_tile(ghost):
-            return 0
+            return
         possible_moves = self.compute_possible_moves(ghost)
         reverse = {
             0: pi,
@@ -588,7 +590,7 @@ class FrightenedGhostAction():
         if reverse[ghost.angle] in possible_moves:
             possible_moves.remove(reverse[ghost.angle])
         if len(possible_moves) == 0:
-            return 0
+            return
         move = random.choice(possible_moves)
         if move == pi:
             ghost.left()
