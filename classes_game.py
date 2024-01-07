@@ -42,11 +42,15 @@ class Game():
 
     def run(self, screen: Surface, board_surface: Surface,
             pacman_surface: Surface) -> None:
+        # Auxiliary variables to control time
         undone = True
         tick = 30.0
         self.start_time = time.time()
         self.current_duraction = 0
+
         button = Button("MENU", 400, 0, 23, 100, 40, self.back_to_menu)
+
+        # Declaration of classes responsible for logic of whole game
         elementmover = ElementMover(self.board)
         ghostlogic = GhostDetectingWalls(self.board)
         pacmanlogic = PacmanLogic(self.board)
@@ -55,10 +59,12 @@ class Game():
         frightenedghostsaction = FrightenedGhostAction(self.ghosts, ghostlogic,
                                                        self.pacman)
         deadghostsaction = DeadGhostAction(self.ghosts, ghostlogic)
+
         while self.running:
             self.current_duraction = time.time() - self.start_time
             timer = self.past_time + self.current_duraction
 
+            # Functions responsible for Pacman's movements
             elementmover.moves(self.pacman)
             if pacmanlogic.eats_points(self.pacman, self.points):
                 normalghostsaction.dot_counter += 1
@@ -69,20 +75,22 @@ class Game():
                 self.past_time -= 6
                 self.frightened_time = timer
 
-            # Logic of ghosts moves
+            # Function menages behaviour of frightened ghosts
             if self.is_frightened:
                 frightenedghostsaction.run()
                 if timer > self.frightened_time:
                     frightenedghostsaction.back_to_normal()
                     self.turn_off_frightened_mode()
 
+            # Function menages behaviour of ghosts in normal mode
             if not self.is_frightened:
                 normalghostsaction.run(timer)
 
+            # Function menages behaviour of dead ghosts
             deadghostsaction.dead_ghosts_go_back()
 
             door = False
-            # Checks collison beetween pacman and ghots
+            # Ghost Action when they should move and when doors open
             for ghost in self.ghosts:
                 normalghostsaction.correct_next_tile(ghostlogic, ghost)
                 if (not ghost.at_home and not ghost.going_out) or \
@@ -93,6 +101,8 @@ class Game():
                 if ghost.going_out:
                     door = True
 
+            # Checks collison beetween pacman and ghots
+            for ghost in self.ghosts:
                 if ghostlogic.collision(ghost, self.pacman):
                     if not self.is_frightened and not ghost.is_dead:
                         self.pacman.lives -= 1
@@ -122,6 +132,7 @@ class Game():
             # Renders consequences of game logic on surfaces
             renderer = Renderer(screen, board_surface,
                                 pacman_surface, self.colors)
+
             # Cleans surfaces
             renderer.cleans_surfaces()
 
