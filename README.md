@@ -1,93 +1,49 @@
 # Pacman Project
+ I. co realizuje projekt
+
+Projekt realizuje grę Pacman. Po uruchomieniu programu możemy wybrać opcje start new game i rozpocząć rozgrywkę pacmana, sterując strzałkami poruszamy pacmanem tak, aby zjadał kropki i nie dał się złapać duchom. Gdy duch dogoni Pacmana wszystkie postaci wracają na początkowe pozycje i Pacman traci jedno życie. Za zjedzenie jednej małej kropki otrzymuje 10 punktów, a do wygrania gry musi zjeść wszystkie małe kropki. Po zjedzeniu większej kropki gracz zdobywa 50 punktów i aktywuję się specjalny tryb gry, w którym duchy zmieniają kolor, spowalniają i Pacman może wtedy zjeść takiego ducha. Takie działanie wynagradza gracza 200 punktami oraz chwilą odpoczynku od goniących go duchów(wracają na określony czas do domku na środku planszy). Za zjedzenie wszystkich dużych kropek Pacman dostaje dodatkowe życie. Oprócz prowadzenia rozgrywki użytkownik może, klinknąc przycisk Menu i wrócić do pierwszej planszy programu. Wtedy może wznowić rozgrywkę przyciskiem Resumu, co spowoduje powrót do ostatnio prowadzonej gry. Kolejną opcją jest zapis stanu gry, gdy użytkownik kliknie przycisk save game na terminalu pojawi się komenda prosząca o podanie nazwy pod jaką ma zapisać stan gry. Program blokuje wpisanie pustej nazwy, a gdy użytkownik poda nazwę pod którą jakiś stan już był zapisany prosi o potwierdzenie i ostrzega o nadpisaniu tamtego stanu. Kolejną możliwością jest klinknięcie przycisku load game w menu i załadowanie poprzednio zapisanych stanów gry. Wtedy terminal wyświetla nazwy możliwych stanów do wczytania lub informuje o braku zapisanych stanów. Wtedy użytkownik wpisuje w terminal, który stan chciałby wczytać, a program weryfikuje czy taki stan istnieje.
+Ostatnim przyciskiem w menu jest exit co pozwala wyłaczyć grę.
+
+
+II. jak go uruchomić, zainstalować dependencje
+Należy sklonować repozytorium. Wejść do katalogu pacman. Wpisać w terminal pip install -r requirements.txt, aby pobrać pygame. Kolejnym krokiem jest wpisanie python3 main.py i wtedy okienko z grą się wyświetli na ekranie.
+
+
+III. diagram architektury projektu z opisem tej architektury
+
+**Postawowe elementy gry.**
+_Klasa Character_ - posiada atrybuty takie jak położenie na planszy (x,y), szybkość postaci, promień, który określa wielkość postaci oraz prywatna zmienną angle, która definiuje, w które stronę postać idzie. 
+_Klasa Pacman_ - dziedziczy po Character, dodatkowo posiada atrybut lives, który określa ile żyć Pacmanowi zostało. Ma również atrubuty takie jak kąt otwarcia buzi i kierunek ruchu ust, dzięi którym funkcja animate_mouth sprawia że pacman rusza ustami. Kolejna funkcja go home wykorzystywana jest gdy Pacman umiera i wraca na pozycję. Draw - rysuje na ekranie.
+_Klasa Ghost_ - dziedziczy po Character, dodatkowo duchy mają imiona, i zmienne określające w którym stanie są(w domu, wychodzą, przestraszone, nieżywe). Klasa posiada funkcje pozwalające na zmianę kierunku ruchu wraz z ustawieniem swojej kolejnej komórki, co wykorzystuje algorytm sterujący duchami.
+_Klasa Board_ - posiada planszę i ma funkcję odpowiadajace na pytania czy w danym miejscu jest coś na planszy
+_Klasa Points_ - klasa liczy zwykłe i super punkty oraz informuję klasę gry gdy super punkt zostanie zjedzony i trzeba właczyć inny tryb gry.
+
+**Klasy pomagające zarządzać zewnętrznymi elementami gry**
+_Klasa EventHandler_ - reaguję na kliknięcia strzałek przez użytkownika i  przycisku button
+_Klasa Renderer_ - sprawia że wszystkie elementy gry pojawiają się na odpowiednich powierzchniach
+
+**Klasy zarządzające logiką gry**
+_Cell Logic_ - posiada funkcje pozwalające obliczać potrzebne komórki do algorytmów zarządzających grą
+_Element Mover_ dzidziczy po Cell Logic i korzystając z jej i swoich funkcji rusza obiektami zgodnie z kierunkiem i pilnuje by nie wjeżdzały w ściany.
+_GhostDetectingWalls_ - dziedziczy po cell logic i w inny sposób oblicza dla ducha, w które kierunki są dostępne dla jego algorytmu. Ma tez funkcje distance, która dostarcza potrzebne wartosci do algorytmu, wybierającego kierunek ducha. Funkcja collision na dwa sposoby sprawdza czy duch i pacman sie nie zdeżyli.
+_Klasa NormalGhostAction_ - sklada sie z funkcji go_to_tile, ktora jest podstawa kazdego ruchu ducha. Oblicza do ktorej nastepnej komórki bardziej opłaca się iść duchowi. Funckje scatter i chase sa zaimplementowane zgodnie z zasadami orginalnego pacmana z artykułu https://gameinternals.com/understanding-pac-man-ghost-behavior , który dokładnie określa jak w pacmanie duchy wytyczają swoje trasy. Tryb scatter powoduje ze każdy duch idzie do swojego ustawionego kąta, tryb chase powoduje, że duchy gonią pacmana na różny sposób w zależności od ich osobowości co też jest opisane w artykule powyżej. Funkcja run powoduje, że duchy co określoną liczbę sekund zmieniają tryby i kierunki, co sprawia, że gra jest trudniejsza.
+_Klasa FrightenedGhostAction_ - korzysta z klasy ghost logic ktora dostarcza w która stronę duch nie może iść i randomowo wybiera kierunek. Oraz zarządza zmianami w zachowaniu duchów w tym trybie.
+_Klasa DeadGhostAction_ korzysta z algorytmu z klasy NormalGhostAction i diedziczy po niej i odpowiada za ruch duchów, które zjadł pacman by wróciły do domku.
+
+**Klasa Game**
+Klasa która zarządza wszystkimi poniższymi klasami, łączy elemnty gry, logikę i komunikację z użytkownikiem i powierzchniami.
+
+**Klasy pomocnicze dla menu** 
+_Klasa Serializer_ - ważne elementy gry wyciąga z klas do słowników by zapisać do pliku
+_Klasa Deserializer_ - z słowników odtwarza elementy gry i pozwala wznowić grę z zapisanego stanu
+
+**Klasy Menu**
+_Klasa button_ odpowiada za wygląd przycisku, wykrywanie czy został klknięty i przechowywanie, która funkcja  z klasy Menu powinna byc wykonana po jego kliknięciu.
+Klasa Menu odpowiada za akcję które dzieją się po wciśnięciu przycisku czyli rozpoczęcia, wznowienie gry, zapisu i odczytu z pliku. Oraz klasa przechowuję obecny stan gry, który był ostatnio rozwgrywany lub żadny jeśli jeszcze nie grano. Klasa zarządza co się dzieję z klasą Game.
+
+Podsumowanie architektury
+Podstawowe elemnety gry + Klasy pomagające zarządzać grą + Klasy pomagające zarządzać zewnętrznymi elementami gry = Game
+Button + Game + Klasy pomocnicze dla menu = Menu
 
 
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab-stud.elka.pw.edu.pl/zwaszczu/pacman-project.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab-stud.elka.pw.edu.pl/zwaszczu/pacman-project/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
