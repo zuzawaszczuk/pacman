@@ -1,15 +1,15 @@
 # Pacman Project
- I. co realizuje projekt
+ **I. Co realizuje projekt**
 
 Projekt realizuje grę Pacman. Po uruchomieniu programu możemy wybrać opcje start new game i rozpocząć rozgrywkę pacmana, sterując strzałkami poruszamy pacmanem tak, aby zjadał kropki i nie dał się złapać duchom. Gdy duch dogoni Pacmana wszystkie postaci wracają na początkowe pozycje i Pacman traci jedno życie. Za zjedzenie jednej małej kropki otrzymuje 10 punktów, a do wygrania gry musi zjeść wszystkie małe kropki. Po zjedzeniu większej kropki gracz zdobywa 50 punktów i aktywuję się specjalny tryb gry, w którym duchy zmieniają kolor, spowalniają i Pacman może wtedy zjeść takiego ducha. Takie działanie wynagradza gracza 200 punktami oraz chwilą odpoczynku od goniących go duchów(wracają na określony czas do domku na środku planszy). Za zjedzenie wszystkich dużych kropek Pacman dostaje dodatkowe życie. Oprócz prowadzenia rozgrywki użytkownik może, klinknąc przycisk Menu i wrócić do pierwszej planszy programu. Wtedy może wznowić rozgrywkę przyciskiem Resumu, co spowoduje powrót do ostatnio prowadzonej gry. Kolejną opcją jest zapis stanu gry, gdy użytkownik kliknie przycisk save game na terminalu pojawi się komenda prosząca o podanie nazwy pod jaką ma zapisać stan gry. Program blokuje wpisanie pustej nazwy, a gdy użytkownik poda nazwę pod którą jakiś stan już był zapisany prosi o potwierdzenie i ostrzega o nadpisaniu tamtego stanu. Kolejną możliwością jest klinknięcie przycisku load game w menu i załadowanie poprzednio zapisanych stanów gry. Wtedy terminal wyświetla nazwy możliwych stanów do wczytania lub informuje o braku zapisanych stanów. Wtedy użytkownik wpisuje w terminal, który stan chciałby wczytać, a program weryfikuje czy taki stan istnieje.
 Ostatnim przyciskiem w menu jest exit co pozwala wyłaczyć grę.
 
 
-II. jak go uruchomić, zainstalować dependencje
+**II. Jak go uruchomić, zainstalować dependencje**
 Należy sklonować repozytorium. Wejść do katalogu pacman. Wpisać w terminal pip install -r requirements.txt, aby pobrać pygame. Kolejnym krokiem jest wpisanie python3 main.py i wtedy okienko z grą się wyświetli na ekranie.
 
 
-III. diagram architektury projektu z opisem tej architektury
+**III. diagram architektury projektu z opisem tej architektury**
 
 **Postawowe elementy gry.**
 
