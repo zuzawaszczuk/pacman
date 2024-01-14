@@ -12,7 +12,7 @@ def test_game_init():
     board = Board(cells)
     ghost = Ghost(5, 100, 150, 4, 9, False, "blinky")
     ghosts = [ghost]
-    game = Game(pacman, board, ghosts, clock, colors, 50, 50)
+    game = Game(pacman, board, ghosts, clock, colors, 50, 50, 100)
     assert game.pacman == pacman
     assert game.board == board
     assert game.ghosts == ghosts
@@ -20,8 +20,10 @@ def test_game_init():
     assert game.colors == colors
     assert game.width == 50
     assert game.height == 50
+    assert game.global_high_score == 100
     assert game.points.points_to_win == 242
     assert game.points.super_point_left == 4
+    assert game.points.score == 0
 
 
 def test_game_running():

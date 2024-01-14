@@ -28,7 +28,7 @@ menu = Menu(colors, screen, board_surface, pacman_surface,
             clock, width, height)
 
 button1 = Button(" Start New Game", 5, 150, 20, 330, 40, Menu.start_new_game,
-                 menu, width, height, cells)
+                 menu, cells)
 button2 = Button(" Resume", 5, 194, 20, 170, 40, Menu.resume_game, menu)
 button3 = Button(" Save Game", 5, 238, 20, 220, 40, Menu.save_game, menu)
 button4 = Button(" Load Game", 5, 282, 20, 220, 40, Menu.load_game, menu)

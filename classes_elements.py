@@ -297,5 +297,7 @@ class Points():
 
     @property
     def high_score(self) -> int:
-        self._high_score = max(self._high_score, self.score)
         return self._high_score
+
+    def set_high_score(self, value: int) -> None:
+        self._high_score = max(value, self._high_score)

@@ -22,7 +22,8 @@ TGame = Mapping[str, Union[bool, float, TBoard, TPacman, TPoints, TGhosts]]
 class Game():
     def __init__(self, pacman: Pacman, board: Board, ghosts: List[Ghost],
                  clock: Clock, colors: Dict[str, TColor],
-                 width: int, height: int, points: Points = Points(),
+                 width: int, height: int, global_high_score: int = 0,
+                 points: Points = Points(),
                  frightened_mode: bool = False, past_time: float = 0.0,
                  frightened_time: float = 0.0) -> None:
         self.pacman = pacman
@@ -32,6 +33,7 @@ class Game():
         self.colors = colors
         self.width = width
         self.height = height
+        self.global_high_score = global_high_score
         self.points = points
         self._frightened_mode = frightened_mode
         self.past_time = past_time
@@ -166,6 +168,10 @@ class Game():
                 renderer.lost()
                 tick = 0.25
                 self.not_running()
+
+            # Checks if score of the game is greater that global high_score
+            self.points.set_high_score(self.global_high_score)
+            self.points.set_high_score(self.points.score)
 
             pygame.display.flip()
             self.clock.tick(tick)
@@ -352,7 +358,8 @@ class Serializer():
 
 
 class Deserializer():
-    def deserialize(self, data: TGame, clock, colors, width, height):
+    def deserialize(self, data: TGame, global_high_score,
+                    clock, colors, width, height):
         pacman = self.deserialize_pacman(data['pacman'])
         board = self.deserialize_board(data['board'])
         ghosts = self.deserialize_ghosts(data['ghosts'])
@@ -361,7 +368,8 @@ class Deserializer():
         past_time = data['past_time']
         frightened_time = data['frightened_time']
         game = Game(pacman, board, ghosts, clock, colors, width,
-                    height, points, is_frightened, past_time, frightened_time)
+                    height, global_high_score, points, is_frightened,
+                    past_time, frightened_time)
         return game
 
     def deserialize_pacman(self, data):

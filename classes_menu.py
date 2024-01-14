@@ -1,7 +1,7 @@
 import pygame
 import sys
 import json
-from classes_elements import Board, Pacman, Ghost
+from classes_elements import Board, Pacman, Ghost, Points
 from classes_game import Game, Serializer, Deserializer
 from typing import Dict, Tuple, List
 from pygame.surface import Surface
@@ -17,7 +17,8 @@ class Menu():
     def __init__(self, colors: Dict[str, TColor], screen: Surface,
                  board_surface: Surface, pacman_surface: Surface,
                  clock: Clock, width: int, height: int,
-                 buttons: List[Button] = []) -> None:
+                 buttons: List[Button] = [],
+                 global_high_score: int = 0) -> None:
 
         self.colors = colors
         self.screen = screen
@@ -27,9 +28,11 @@ class Menu():
         self.width = width
         self.height = height
         self._buttons = buttons
+        self.global_high_score = global_high_score
         self._current_game: Game | None = None
 
     def run(self) -> None:
+        self.get_high_score_from_saves()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -58,25 +61,28 @@ class Menu():
 
     def set_game(self, game: Game | None) -> None:
         self._current_game = game
+        self.global_high_score = max(self.global_high_score,
+                                     game.points.high_score)
 
     def run_current_game(self) -> None:
         self.current_game.running_again()
         self.current_game.run(self.screen,
                               self.board_surface, self.pacman_surface)
 
-    def start_new_game(self, width: int, height: int,
-                       cells: List[List[int]]) -> None:
+    def start_new_game(self, cells: List[List[int]]) -> None:
 
         copy_cells = copy.deepcopy(cells)
-        blinky = Ghost(width // 2, 200, 2.3, 8, "blinky")
-        inky = Ghost(width // 2 - 30, 260, 2.3, 8, "inky")
-        pinky = Ghost(width // 2, 260, 2.3, 8, "pinky")
-        clyde = Ghost(width // 2 + 30, 260, 2.3, 8, "clyde")
+        blinky = Ghost(self.width // 2, 200, 2.3, 8, "blinky")
+        inky = Ghost(self.width // 2 - 30, 260, 2.3, 8, "inky")
+        pinky = Ghost(self.width // 2, 260, 2.3, 8, "pinky")
+        clyde = Ghost(self.width // 2 + 30, 260, 2.3, 8, "clyde")
         ghosts = [blinky, inky, pinky, clyde]
-        pacman = Pacman(width // 2, 315, 3, 10)
+        pacman = Pacman(self.width // 2, 315, 3, 10)
         board = Board(copy_cells)
+        points = Points()
         game = Game(pacman, board, ghosts, self.clock, self.colors,
-                    self.width, self.height)
+                    self.width, self.height, self.global_high_score,
+                    points, False, 0, 0)
         game.run(self.screen, self.board_surface, self.pacman_surface)
         self.set_game(game)
         self.run()
@@ -124,11 +130,16 @@ class Menu():
         print(f'Avaiable saves to load: {keys_list}')
 
         save = self.gets_user_input_load(keys_list)
-
+        print(f'Loading save from {save}')
         deserializer = Deserializer()
-        game = deserializer.deserialize(existing_data[save], self.clock,
+        game = deserializer.deserialize(existing_data[save],
+                                        self.global_high_score, self.clock,
                                         self.colors, self.width, self.height)
         game.run(self.screen, self.board_surface, self.pacman_surface)
+        if game.points.points_to_win == 0:
+            print("Can't load the game that was already won!")
+        self.set_game(game)
+        self.run()
 
     def exit_game(self):
         pygame.quit()
@@ -163,12 +174,12 @@ class Menu():
         return user_input
 
     def gets_user_input_load(self, keys_list: List) -> str:
-        instruction = "Enter the name of the saved game state you want to load"
+        instruction = "Enter the name of the saved game you want to load: "
         while True:
             try:
                 user_input = input(instruction)
                 if user_input not in keys_list:
-                    raise ValueError("Thids saved game state does not exist."
+                    raise ValueError("This saved game state does not exist."
                                      "Please enter a valid name.")
                 break
             except ValueError as e:
@@ -179,6 +190,18 @@ class Menu():
                     pygame.quit()
                     sys.exit()
         return user_input
+
+    def get_high_score_from_saves(self):
+        try:
+            with open("saved_games.json", 'r') as file:
+                existing_data = json.load(file)
+        except FileNotFoundError:
+            existing_data = {}
+
+        for save in existing_data.keys():
+            high_score = existing_data[save]['points'].get('high_score', 0)
+            if high_score > self.global_high_score:
+                self.global_high_score = high_score
 
     def draw(self):
         pygame.font.init()
